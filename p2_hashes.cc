@@ -3,30 +3,43 @@
  * two output statements—one that outputs the hash mark and one that outputs
  * an end-of-line), write a program that produces the following shape:
  *
- * ########  0, 4
- *  ######   1, 3
- *   ####    2, 2
- *    ##     3, 1
+ * ########
+ *  ######
+ *   ####
+ *    ##
  *
  * P2.2:
- *    ##    3, 1
- *   ####   2, 2
- *  ######  1, 3
- * ######## 0, 4
- * ######## 0, 4
- *  ######  1, 3
- *   ####   2, 2
- *    ##    3, 1
+ *    ##
+ *   ####
+ *  ######
+ * ########
+ * ########
+ *  ######
+ *   ####
+ *    ##
  *
  * P2.3:
- * #            # 0, 1
- *  ##        ##  1, 2
- *   ###    ###   2, 3
- *    ########    3, 4
- *    ########    3, 4
- *   ###    ###   2, 3
- *  ##        ##  1, 2
- * #            # 0, 1
+ * #            #
+ *  ##        ##
+ *   ###    ###
+ *    ########
+ *    ########
+ *   ###    ###
+ *  ##        ##
+ * #            #
+ *
+ * P2.4:
+ *      ##
+ *     ####
+ *    ######
+ *   ########
+ *  ##########
+ *     ####
+ *     ####
+ *     ####
+ *     ####
+ *     ####
+ *     ####
  */
 
 #include <iostream>
@@ -45,6 +58,7 @@ void symmetrical_line(int spaces, int hashes);
 void p2_1();
 void p2_2();
 void p2_3();
+void p2_4();
 
 // Functions to print a single character.
 inline void print_newline()
@@ -148,12 +162,31 @@ void p2_3()
     print_newline();
 }
 
+void p2_4()
+{
+    const int centre = 5;
+    const int tail_length = 6;
+
+    for (int ii = 0; ii < 5; ii++)
+    {
+        symmetrical_line(LIMIT - ii, ii + 1, centre);
+    }
+
+    for (int ii = 0; ii < tail_length; ii++)
+    {
+        symmetrical_line(3, 2, centre);
+    }
+
+    print_newline();
+}
+
 // Print hash patters for all three problems.
 int main()
 {
     p2_1();
     p2_2();
     p2_3();
+    p2_4();
 
     return 0;
 }
