@@ -1,5 +1,7 @@
 #include <iostream>
 #include <bitset>
+#include <sstream>
+#include <limits>
 
 using std::cout;
 using std::cin;
@@ -7,54 +9,121 @@ using std::endl;
 using std::string;
 using std::bitset;
 using std::runtime_error;
+using std::hex;
+using std::ostringstream;
 
-void decimal_to_binary();
-void binary_to_decimal();
+
+unsigned long get_user_input();
+void convert_to_output(unsigned long input);
+unsigned long get_binary_input();
+unsigned long get_hex_input();
+unsigned long get_decimal_input();
 
 
 int main()
 {
-    string rsp;
+    unsigned long input;
 
-    cout << "Convert from binary (b) or decimal (d)?" << endl << "> ";
-    cin >> rsp;
-    switch (rsp[0]) {
-        case 'b':
-            binary_to_decimal();
-            break;
-
-        case 'd':
-            decimal_to_binary();
-            break;
-
-        default:
-            throw runtime_error("Bad input.");
-    }
+    input = get_user_input();
+    convert_to_output(input);
 
     return 0;
 }
 
-void decimal_to_binary()
+unsigned long get_user_input()
 {
-    unsigned long decimal;
-    bitset<8 * sizeof(long)> binary;
+    string rsp;
+    unsigned long converted_input;
+    ostringstream ss;
 
-    cout << "Decimal -> binary selected. Enter decimal number:" << endl
+    cout << "Select input format: (b)inary, (h)ex or (d)ecimal?"
+         << endl
          << "> ";
-    cin >> decimal;
-    binary = bitset<8 * sizeof(long)>(decimal);
-    cout << "In binary: " << binary << endl;
+    cin >> rsp;
+
+    switch (rsp[0]) {
+        case 'b':
+            converted_input = get_binary_input();
+            break;
+
+        case 'h':
+            converted_input = get_hex_input();
+            break;
+
+        case 'd':
+            converted_input = get_decimal_input();
+            break;
+
+        default:
+            ss << "Bad input: " << rsp;
+            throw runtime_error(ss.str());
+    }
+
+    return converted_input;
 }
 
-void binary_to_decimal()
+unsigned long get_binary_input()
 {
-    unsigned long decimal;
     bitset<8 * sizeof(long)> binary;
 
-    cout << "Binary -> decimal selected. Enter decimal number:" << endl
+    cout << "Binary input selected. Enter binary number:" << endl
          << "> ";
     cin >> binary;
-    decimal = binary.to_ulong();
-    cout << "In decimal: " << decimal << endl;
+    return binary.to_ulong();
+}
+
+unsigned long get_hex_input()
+{
+    unsigned long hex_input;
+
+    cout << "Hex input selected. Enter hex number:" << endl
+         << "> ";
+    cin >> hex >> hex_input;
+
+    return hex_input;
+}
+
+
+unsigned long get_decimal_input()
+{
+    unsigned long decimal;
+
+    cout << "Decimal input selected. Enter decimal number:" << endl
+         << "> ";
+    cin >> decimal;
+
+    return decimal;
+}
+
+void convert_to_output(unsigned long input)
+{
+    string rsp;
+    bitset<8 * sizeof(long)> binary;
+    ostringstream ss;
+
+    //cin.ignore(std::numeric_limits<std::streamsize>::max());
+    cout << "Select output format: (b)inary, (h)ex or (d)ecimal?"
+         << endl
+         << "> ";
+    cin >> rsp;
+
+    switch(rsp[0]) {
+        case 'b':
+            binary = bitset<8* sizeof(long)>(input);
+            cout << binary << endl;
+            break;
+
+        case 'h':
+            cout << hex << input << endl;
+            break;
+
+        case 'd':
+            cout << input << endl;
+            break;
+
+        default:
+            ss << "Bad input: " << rsp;
+            throw runtime_error(ss.str());
+    }
 }
 
