@@ -2,128 +2,100 @@
 #include <bitset>
 #include <sstream>
 #include <limits>
+#include <string>
+#include <iomanip>
+#include <stdlib.h>
 
 using std::cout;
 using std::cin;
 using std::endl;
 using std::string;
-using std::bitset;
 using std::runtime_error;
-using std::hex;
 using std::ostringstream;
+using std::out_of_range;
+using std::stoi;
+
+int get_base(string msg);
+int get_user_input();
+string itostr(int input_num, int base);
+string convert_to_output(int input_num);
 
 
-unsigned long get_user_input();
-void convert_to_output(unsigned long input);
-unsigned long get_binary_input();
-unsigned long get_hex_input();
-unsigned long get_decimal_input();
-
-
+// Get the input in a specified base, then convert to output in another base.
+// Display the result.
 int main()
 {
-    unsigned long input;
+    int input_num;
+    string output_repr;
 
-    input = get_user_input();
-    convert_to_output(input);
+    input_num = get_user_input();
+    output_repr = convert_to_output(input_num);
+    cout << "Output representation = " << output_repr << endl;
 
     return 0;
 }
 
-unsigned long get_user_input()
+// Prompt user to enter a base in range 2-16.
+int get_base(string msg)
 {
+    int base;
     string rsp;
+    ostringstream ss;
+
+    cout << msg << " (2-16):" << endl << "> ";
+    cin >> rsp;
+    base = stoi(rsp);
+    if (base < 2 || base > 16) {
+        ss << "Unexpected base " << base;
+        throw out_of_range(ss.str());
+    }
+
+    return base;
+}
+
+// Get the user to enter a base and then a number in that base.
+int get_user_input()
+{
+    string rsp1;
+    string rsp2;
+    int base;
+    int input_num;
+    ostringstream ss;
     unsigned long converted_input;
-    ostringstream ss;
 
-    cout << "Select input format: (b)inary, (h)ex or (d)ecimal?"
-         << endl
-         << "> ";
-    cin >> rsp;
+    base = get_base("Enter input base");
 
-    switch (rsp[0]) {
-        case 'b':
-            converted_input = get_binary_input();
-            break;
+    cout << "Enter number:" << endl << "> ";
+    cin >> rsp2;
+    input_num = stoi(rsp2, NULL, base);
 
-        case 'h':
-            converted_input = get_hex_input();
-            break;
+    return input_num;
+}
 
-        case 'd':
-            converted_input = get_decimal_input();
-            break;
+// Convert an integer into a string representation for a given base.
+string itostr(int input_num, int base)
+{
+    string output_repr = "";
+    const string digits = "0123456789abcdefg";
 
-        default:
-            ss << "Bad input: " << rsp;
-            throw runtime_error(ss.str());
+    while (input_num != 0) {
+        output_repr = digits[input_num % base] + output_repr;
+        input_num /= base;
     }
 
-    return converted_input;
+    return output_repr;
 }
 
-unsigned long get_binary_input()
+// Prompt a user to enter a base and return the converted string
+// representation of the previously entered integer in that base.
+string convert_to_output(int input_num)
 {
-    bitset<8 * sizeof(long)> binary;
+    int base;
+    string output_repr;
 
-    cout << "Binary input selected. Enter binary number:" << endl
-         << "> ";
-    cin >> binary;
-    return binary.to_ulong();
-}
+    base = get_base("Enter output base");
+    output_repr = itostr(input_num, base);
 
-unsigned long get_hex_input()
-{
-    unsigned long hex_input;
-
-    cout << "Hex input selected. Enter hex number:" << endl
-         << "> ";
-    cin >> hex >> hex_input;
-
-    return hex_input;
-}
-
-
-unsigned long get_decimal_input()
-{
-    unsigned long decimal;
-
-    cout << "Decimal input selected. Enter decimal number:" << endl
-         << "> ";
-    cin >> decimal;
-
-    return decimal;
-}
-
-void convert_to_output(unsigned long input)
-{
-    string rsp;
-    bitset<8 * sizeof(long)> binary;
-    ostringstream ss;
-
-    //cin.ignore(std::numeric_limits<std::streamsize>::max());
-    cout << "Select output format: (b)inary, (h)ex or (d)ecimal?"
-         << endl
-         << "> ";
-    cin >> rsp;
-
-    switch(rsp[0]) {
-        case 'b':
-            binary = bitset<8* sizeof(long)>(input);
-            cout << binary << endl;
-            break;
-
-        case 'h':
-            cout << hex << input << endl;
-            break;
-
-        case 'd':
-            cout << input << endl;
-            break;
-
-        default:
-            ss << "Bad input: " << rsp;
-            throw runtime_error(ss.str());
-    }
+    return output_repr;
 }
 
