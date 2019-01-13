@@ -56,18 +56,15 @@ int get_base(string msg)
 // Get the user to enter a base and then a number in that base.
 int get_user_input()
 {
-    string rsp1;
-    string rsp2;
+    string rsp;
     int base;
     int input_num;
-    ostringstream ss;
-    unsigned long converted_input;
 
     base = get_base("Enter input base");
 
     cout << "Enter number:" << endl << "> ";
-    cin >> rsp2;
-    input_num = stoi(rsp2, NULL, base);
+    cin >> rsp;
+    input_num = stoi(rsp, NULL, base);
 
     return input_num;
 }

@@ -1,7 +1,6 @@
-/*
- * P2.1: Using the same rule as the shapes programs from earlier in the chapter (only
- * two output statements—one that outputs the hash mark and one that outputs
- * an end-of-line), write a program that produces the following shape:
+/* P2.1: Using the same rule as the shapes programs from earlier in the chapter
+ * (only two output statements—one that outputs the hash mark and one that
+ * outputs an end-of-line), write a program that produces the following shape:
  *
  * ########
  *  ######
@@ -114,7 +113,6 @@ void symmetrical_line(int spaces, int hashes, int centre)
 // Print the hash pattern for P2.1.
 void p2_1()
 {
-    int jj;
     const int limit = 4;
 
     for (int ii = 0; ii < limit; ii++)
