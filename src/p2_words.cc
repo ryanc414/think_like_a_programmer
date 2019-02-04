@@ -9,6 +9,7 @@ using std::string;
 using std::cin;
 using std::cout;
 using std::endl;
+using std::getline;
 
 int count_words(string line);
 int longest_word(string line);
@@ -21,11 +22,9 @@ int main()
     int word_count;
     int longest_word_len;
 
-    //cout << "Enter a line:" << endl << "> ";
-    //cin >> line;
-    //cout << line << endl;
-
-    line = "test string here.";
+    cout << "Enter a line:" << endl << "> ";
+    getline(cin, line);
+    cout << "Line read as: \"" << line << "\"" << endl;
 
     word_count = count_words(line);
     longest_word_len = longest_word(line);
@@ -80,8 +79,9 @@ int longest_word(string line)
     return longest_length;
 }
 
+// Check if a character is a letter or not.
 inline bool is_letter(char c)
 {
-    return c >= 'a' && c <= 'Z';
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 }
 
