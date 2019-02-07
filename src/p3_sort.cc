@@ -7,11 +7,13 @@
 #include <string>
 #include <array>
 #include <algorithm>
+#include <vector>
 
 using std::string;
 using std::cout;
 using std::endl;
 using std::array;
+using std::vector;
 using std::sort;
 using std::ostream;
 
@@ -21,13 +23,13 @@ struct student {
     string name;
 };
 
-void sort_by_grade();
-void sort_by_id();
+void sort_by_grade(vector<const student *> &students);
+void sort_by_id(vector<const student *> &students);
 ostream & operator<<(ostream &strm, student const &stud);
 
 // Set up an array of students, to be sorted.
 const int ARRAY_SIZE = 10;
-array<student, ARRAY_SIZE> studentArray = {{
+const array<const student, ARRAY_SIZE> STUDENTS = {{
     {87, 10001, "Fred"},
     {28, 10002, "Tom"},
     {100, 10003, "Alistair"},
@@ -43,38 +45,50 @@ array<student, ARRAY_SIZE> studentArray = {{
 // Sort the student array by both grade and ID.
 int main()
 {
-    sort_by_grade();
-    sort_by_id();
+    vector<const student *> student_pointers;
+
+    // Set up a vector of pointers to the students defined in studentArray.
+    // We will sort this pointer array for efficiency.
+    student_pointers.reserve(ARRAY_SIZE);
+    for (const student &std : STUDENTS) {
+        student_pointers.push_back(&std);
+    }
+
+    sort_by_grade(student_pointers);
+    sort_by_id(student_pointers);
 
     return 0;
 }
 
 // Sort the array of students by grade and print it.
-void sort_by_grade()
+void sort_by_grade(vector<const student *> &students)
 {
-    sort(studentArray.begin(), studentArray.end(), [](student a, student b) {
-        return a.grade < b.grade;
+    sort(students.begin(),
+         students.end(),
+         [](const student *a, const student *b) {
+             return a->grade < b->grade;
     });
 
     cout << "Students sorted by grade:" << endl;
-    for (const student &std : studentArray) {
-        cout << std << endl;
+    for (const student *std : students) {
+        cout << *std << endl;
     }
     cout << endl;
 }
 
 // Sort the array of students by their ID and print it.
-void sort_by_id()
+void sort_by_id(vector<const student *> &students)
 {
-    sort(studentArray.begin(), studentArray.end(), [](student a, student b) {
-        return a.studentID < b.studentID;
+    sort(students.begin(),
+         students.end(),
+         [](const student *a, const student *b) {
+             return a->studentID < b->studentID;
     });
 
     cout << "Students sorted by ID:" << endl;
-    for (const student &std : studentArray) {
-        cout << std << endl;
+    for (const student *std : students) {
+        cout << *std << endl;
     }
-    cout << endl;
 }
 
 // Enable printing of student via cout.
