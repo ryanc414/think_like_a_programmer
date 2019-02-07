@@ -1,16 +1,19 @@
-/* Are you disappointed we didn’t do more with sorting? I’m here to help. To
+/* Are you disappointed we didn't do more with sorting? I'm here to help. To
  * make sure you are comfortable with qsort, write code that uses the function
  * to sort an array of our student struct. First have it sort by grade, and
  * then try it again using the student ID.
  */
 #include <iostream>
 #include <string>
-#include <cstdlib>
-#include <cstring>
+#include <array>
+#include <algorithm>
 
 using std::string;
 using std::cout;
 using std::endl;
+using std::array;
+using std::sort;
+using std::ostream;
 
 struct student {
     int grade;
@@ -20,12 +23,11 @@ struct student {
 
 void sort_by_grade();
 void sort_by_id();
-int comp_grades(const void *a, const void *b);
-int comp_id(const void *a, const void *b);
-void print_student(student *self);
+ostream & operator<<(ostream &strm, student const &stud);
 
+// Set up an array of students, to be sorted.
 const int ARRAY_SIZE = 10;
-student studentArray[ARRAY_SIZE] = {
+array<student, ARRAY_SIZE> studentArray = {{
     {87, 10001, "Fred"},
     {28, 10002, "Tom"},
     {100, 10003, "Alistair"},
@@ -36,8 +38,9 @@ student studentArray[ARRAY_SIZE] = {
     {70, 10008, "Candy"},
     {81, 10009, "Aretha"},
     {68, 10010, "Veronica"}
-};
+}};
 
+// Sort the student array by both grade and ID.
 int main()
 {
     sort_by_grade();
@@ -49,11 +52,13 @@ int main()
 // Sort the array of students by grade and print it.
 void sort_by_grade()
 {
-    qsort(studentArray, ARRAY_SIZE, sizeof(student), comp_grades);
+    sort(studentArray.begin(), studentArray.end(), [](student a, student b) {
+        return a.grade < b.grade;
+    });
 
     cout << "Students sorted by grade:" << endl;
-    for (int i = 0; i < ARRAY_SIZE; i++) {
-        print_student(&studentArray[i]);
+    for (const student &std : studentArray) {
+        cout << std << endl;
     }
     cout << endl;
 }
@@ -61,37 +66,21 @@ void sort_by_grade()
 // Sort the array of students by their ID and print it.
 void sort_by_id()
 {
-    qsort(studentArray, ARRAY_SIZE, sizeof(student), comp_id);
+    sort(studentArray.begin(), studentArray.end(), [](student a, student b) {
+        return a.studentID < b.studentID;
+    });
 
     cout << "Students sorted by ID:" << endl;
-    for (int i = 0; i < ARRAY_SIZE; i++) {
-        print_student(&studentArray[i]);
+    for (const student &std : studentArray) {
+        cout << std << endl;
     }
     cout << endl;
 }
 
-// Comparison function for student grades.
-int comp_grades(const void *a, const void *b)
+// Enable printing of student via cout.
+ostream & operator<<(ostream &strm, student const &stud)
 {
-    student *student_a = (student *)a;
-    student *student_b = (student *)b;
-
-    return student_b->grade - student_a->grade;
-}
-
-// Comparison function for student IDs.
-int comp_id(const void *a, const void *b)
-{
-    student *student_a = (student *)a;
-    student *student_b = (student *)b;
-
-    return student_b->studentID - student_a->studentID;
-}
-
-// Print a string representation of a student.
-void print_student(student *self)
-{
-    cout << self->name << " ID = " << self->studentID <<
-            ", grade = " << self->grade << endl;
+    return strm << stud.name << ": ID = " << stud.studentID << ", grade = "
+                << stud.grade;
 }
 
