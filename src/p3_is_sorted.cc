@@ -12,7 +12,7 @@ using std::endl;
 using std::vector;
 using std::range_error;
 
-bool is_sorted(vector<int> arr);
+bool is_sorted(const vector<int> &arr);
 
 
 // Read an input array from stdin and determine if it is sorted.
@@ -30,7 +30,8 @@ int main()
 
     input_vec.reserve(num_elements);
     for (int i = 0; i < num_elements; i++) {
-        cout << "Enter next element:" << endl << "> ";
+        cout << "Enter element " << i + 1 << "/" << num_elements << endl
+             << "> ";
         cin >> next_el;
         input_vec.push_back(next_el);
     }
@@ -47,7 +48,7 @@ int main()
 //
 // We only check for sorting in ascending numerical order. An empty array is
 // considered to be sorted.
-bool is_sorted(vector<int> arr)
+bool is_sorted(const vector<int> &arr)
 {
     // No iteration will be performed for empty or single-element vectors -
     // both cases are considered to be sorted.
