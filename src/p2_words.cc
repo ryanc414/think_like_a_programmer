@@ -5,45 +5,35 @@
 #include <string>
 #include <iostream>
 
-using std::string;
-using std::cin;
-using std::cout;
-using std::endl;
-using std::getline;
+int CountWords(std::string line);
+int LongestWord(std::string line);
+inline bool IsLetter(char c);
 
-int count_words(string line);
-int longest_word(string line);
-inline bool is_letter(char c);
+// Read a line from stdin and print the word count and longest word length.
+int main() {
+    std::string line;
 
+    std::cout << "Enter a line:" << std::endl << "> ";
+    std::getline(std::cin, line);
+    std::cout << "Line read as: \"" << line << "\"" << std::endl;
 
-int main()
-{
-    string line;
-    int word_count;
-    int longest_word_len;
+    int word_count = CountWords(line);
+    int LongestWord_len = LongestWord(line);
 
-    cout << "Enter a line:" << endl << "> ";
-    getline(cin, line);
-    cout << "Line read as: \"" << line << "\"" << endl;
-
-    word_count = count_words(line);
-    longest_word_len = longest_word(line);
-
-    cout << "Word count: " << word_count << endl;
-    cout << "Longest word length: " << longest_word_len << endl;
+    std::cout << "Word count: " << word_count << std::endl;
+    std::cout << "Longest word length: " << LongestWord_len << std::endl;
 
     return 0;
 }
 
 // Count the number of words in a string. Words are consecutive blocks of
 // letters.
-int count_words(string line)
-{
+int CountWords(std::string line) {
     int count = 0;
     bool in_word = false;
 
     for (char &c : line) {
-        if (is_letter(c)) {
+        if (IsLetter(c)) {
             in_word = true;
         } else if (in_word) {
             count++;
@@ -59,13 +49,12 @@ int count_words(string line)
 }
 
 // Return the length of the longest word within a string.
-int longest_word(string line)
-{
+int LongestWord(std::string line) {
     int longest_length = 0;
     int curr_length = 0;
 
     for (char &c : line) {
-        if (is_letter(c)) {
+        if (IsLetter(c)) {
             curr_length++;
         } else {
             curr_length = 0;
@@ -80,8 +69,7 @@ int longest_word(string line)
 }
 
 // Check if a character is a letter or not.
-inline bool is_letter(char c)
-{
+inline bool IsLetter(char c) {
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 }
 

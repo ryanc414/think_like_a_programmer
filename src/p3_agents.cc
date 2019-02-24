@@ -9,37 +9,29 @@
 #include <array>
 #include <iostream>
 #include <algorithm>
-#include <cassert>
 
-using std::array;
-using std::cout;
-using std::endl;
-using std::sort;
+constexpr int kNumAgents = 3;
+constexpr int kNumMonths = 12;
 
-const int NUM_AGENTS = 3;
-const int NUM_MONTHS = 12;
-
-const array<const array<int, NUM_MONTHS>, NUM_AGENTS> SALES = {{
+const std::array<const std::array<int, kNumMonths>, kNumAgents> kSales = {{
     {1856, 498, 30924, 87478, 328, 2653, 387, 3754, 387587, 2873, 276, 32},
     {5865, 5456, 3983, 6464, 9957, 4785, 3875, 3838, 4959, 1122, 7766, 2534},
     {23, 55, 67, 99, 265, 376, 232, 223, 4546, 564, 4544, 3434}
 }};
 
-double calculate_median(array<int, NUM_MONTHS> sales);
+double CalculateMedian(std::array<int, kNumMonths> sales);
 
 // Calculate the median sales for each agent and output which is the very
 // bestest.
-int main()
-{
+int main() {
     double highest_median = -1;
-    double median;
     int bestest_agent = -1;
     int agent_ix = 0;
 
-    for (auto &agent_sales : SALES) {
-        median = calculate_median(agent_sales);
-        cout << "Agent " << agent_ix << " has median sales = " << median
-             << endl;
+    for (auto &agent_sales : kSales) {
+        double median = CalculateMedian(agent_sales);
+        std::cout << "Agent " << agent_ix << " has median sales = " << median
+             << std::endl;
         if (median > highest_median) {
             highest_median = median;
             bestest_agent = agent_ix;
@@ -47,21 +39,21 @@ int main()
         agent_ix++;
     }
 
-    cout << "The bestest agent is number: " << bestest_agent
-         << " with median sales of " << highest_median << endl;
+    std::cout << "The bestest agent is number: " << bestest_agent
+         << " with median sales of " << highest_median << std::endl;
 
     return 0;
 }
 
 
 // Calculate the median of a single agent's sales.
-double calculate_median(array<int, NUM_MONTHS> sales)
-{
-    const int middle = NUM_MONTHS / 2;
+double CalculateMedian(std::array<int, kNumMonths> sales) {
+    constexpr int kMiddle = kNumMonths / 2;
+    static_assert(kMiddle * 2 == kNumMonths,
+                  "Expected an even number of months.");
 
-    assert(middle * 2 == NUM_MONTHS);
-    sort(sales.begin(), sales.end());
+    std::sort(sales.begin(), sales.end());
 
-    return (double)(sales[middle - 1] + sales[middle]) / 2.0;
+    return static_cast<double>(sales[kMiddle - 1] + sales[kMiddle]) / 2.0;
 }
 

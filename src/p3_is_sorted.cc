@@ -6,37 +6,31 @@
 #include <vector>
 #include <stdexcept>
 
-using std::cout;
-using std::cin;
-using std::endl;
-using std::vector;
-using std::range_error;
-
-bool is_sorted(const vector<int> &arr);
-
+bool IsSorted(const std::vector<int> &arr);
 
 // Read an input array from stdin and determine if it is sorted.
-int main()
-{
-    vector<int> input_vec;
+int main() {
+    std::vector<int> input_vec;
     int num_elements;
-    int next_el;
 
-    cout << "Enter number of elements:" << endl << "> ";
-    cin >> num_elements;
+    std::cout << "Enter number of elements:" << std::endl << "> ";
+    std::cin >> num_elements;
     if (num_elements < 0) {
-        throw range_error("Number of elements must be positive.");
+        throw std::range_error("Number of elements must be positive.");
     }
 
     input_vec.reserve(num_elements);
+
     for (int i = 0; i < num_elements; i++) {
-        cout << "Enter element " << i + 1 << "/" << num_elements << endl
-             << "> ";
-        cin >> next_el;
+        int next_el;
+        std::cout << "Enter element " << i + 1 << "/" << num_elements
+             << std::endl << "> ";
+        std::cin >> next_el;
         input_vec.push_back(next_el);
     }
 
-    cout << "Vector is sorted? " << is_sorted(input_vec) << endl;
+    std::cout << "Input is sorted? " << std::boolalpha
+              << IsSorted(input_vec) << std::endl;
 
     return 0;
 }
@@ -48,9 +42,8 @@ int main()
 //
 // We only check for sorting in ascending numerical order. An empty array is
 // considered to be sorted.
-bool is_sorted(const vector<int> &arr)
-{
-    // No iteration will be performed for empty or single-element vectors -
+bool IsSorted(const std::vector<int> &arr) {
+    // No iteration will be performed for empty or single-element std::vectors -
     // both cases are considered to be sorted.
     for (auto cur = arr.begin() + 1; cur < arr.end(); cur++) {
 
@@ -62,7 +55,7 @@ bool is_sorted(const vector<int> &arr)
         }
     }
 
-    // If no out-of-order elements were found we conclude that the vector
+    // If no out-of-order elements were found we conclude that the std::vector
     // is sorted.
     return true;
 }

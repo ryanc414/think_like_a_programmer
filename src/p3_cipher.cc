@@ -1,9 +1,9 @@
-/* Here’s a variation on the array of const values. Write a program for creating a
+/* Here's a variation on the std::array of const values. Write a program for creating a
  * substitution cipher problem. In a substitution cipher problem, all messages
  * are made of uppercase letters and punctuation. The original message is called
  * the plaintext, and you create the ciphertext by substituting each letter with
  * another letter (for example, each C could become an X). For this problem,
- * hard-code a const array of 26 char elements for the cipher, and have your
+ * hard-code a const std::array of 26 char elements for the cipher, and have your
  * program read a plaintext message and output the equivalent ciphertext.
  *
  * Have the previous program convert the ciphertext back to the plaintext to
@@ -12,8 +12,8 @@
  * To make the ciphertext problem even more challenging, have your pro-
  * gram randomly generate the cipher array instead of a hard-coded const array.
  * Effectively, this means placing a random character in each element of the
- * array, but remember that you can’t substitute a letter for itself. So the first
- * element can’t be A, and you can’t use the same letter for two substitutions—
+ * array, but remember that you can't substitute a letter for itself. So the first
+ * element can't be A, and you can't use the same letter for two substitutions
  * that is, if the first element is S, no other element can be S.
  */
 
@@ -22,36 +22,29 @@
 #include <string>
 #include <cstdlib>
 
-using std::cout;
-using std::cin;
-using std::endl;
-using std::getline;
-using std::array;
-using std::string;
-
-const int NUM_LETTERS = 26;
+constexpr int kNumLetters = 26;
 
 // A Cipher represents a mapping between characters in a plaintext and
 // encrypted form.
 class Cipher {
   public:
-    // Construct by generating a random array.
+    // Construct by generating a random std::array.
     Cipher() {
         // Generate a random shift in the range 1-25.
-        int shift = rand() % (NUM_LETTERS - 1) + 1;
+        int shift = rand() % (kNumLetters - 1) + 1;
 
-        for (int i = 0; i < NUM_LETTERS; i++) {
-            cipher_array_[(i + shift) % NUM_LETTERS] = 'A' + i;
+        for (int i = 0; i < kNumLetters; i++) {
+            cipher_array_[(i + shift) % kNumLetters] = 'A' + i;
         }
     }
 
-    // Construct from a cipher array.
-    explicit Cipher(const array<char, NUM_LETTERS> cipher_array)
+    // Construct from a cipher std::array.
+    explicit Cipher(const std::array<char, kNumLetters> cipher_array)
         : cipher_array_(cipher_array) {};
 
     // Construct a new cipher that inverts this cipher.
     Cipher inverse() const {
-        array<char, NUM_LETTERS> inverse_arr;
+        std::array<char, kNumLetters> inverse_arr;
 
         for (char c = 'A'; c <= 'Z'; ++c) {
             inverse_arr[(*this)[c] - 'A'] = c;
@@ -65,9 +58,9 @@ class Cipher {
         return cipher_array_[letter - 'A'];
     }
 
-    // Convert a string using this cipher.
-    const string convert_string(const string &from) const {
-        string result;
+    // Convert a whole string using this cipher.
+    const std::string convert_string(const std::string &from) const {
+        std::string result;
         result.reserve(from.size());
 
         for (char c : from) {
@@ -82,8 +75,8 @@ class Cipher {
     }
 
   private:
-    // Array that defines the cipher mapping.
-    array<char, NUM_LETTERS> cipher_array_;
+    // std::array that defines the cipher mapping.
+    std::array<char, kNumLetters> cipher_array_;
 };
 
 
@@ -91,16 +84,16 @@ class Cipher {
 int main() {
     const Cipher cipher;
     const Cipher inverse_cipher = cipher.inverse();
-    string plaintext;
+    std::string plaintext;
 
-    cout << "Enter the plaintext line:" << endl << " > ";
-    getline(cin, plaintext);
+    std::cout << "Enter the plaintext line (in ALL CAPS):" << std::endl << " > ";
+    std::getline(std::cin, plaintext);
 
-    const string encrypted = cipher.convert_string(plaintext);
-    cout << "Encrypted: " << encrypted << endl;
+    const std::string encrypted = cipher.convert_string(plaintext);
+    std::cout << "Encrypted: " << encrypted << std::endl;
 
-    const string decrypted = inverse_cipher.convert_string(encrypted);
-    cout << "Decrypted: " << decrypted << endl;
+    const std::string decrypted = inverse_cipher.convert_string(encrypted);
+    std::cout << "Decrypted: " << decrypted << std::endl;
 
     return 0;
 }
