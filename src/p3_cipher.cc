@@ -36,7 +36,14 @@ const int NUM_LETTERS = 26;
 class Cipher {
   public:
     // Construct by generating a random array.
-    Cipher() : cipher_array_(generate_cipher_array()) {}
+    Cipher() {
+        // Generate a random shift in the range 1-25.
+        int shift = rand() % (NUM_LETTERS - 1) + 1;
+
+        for (int i = 0; i < NUM_LETTERS; i++) {
+            cipher_array_[(i + shift) % NUM_LETTERS] = 'A' + i;
+        }
+    }
 
     // Construct from a cipher array.
     explicit Cipher(const array<char, NUM_LETTERS> cipher_array)
@@ -76,21 +83,7 @@ class Cipher {
 
   private:
     // Array that defines the cipher mapping.
-    const array<char, NUM_LETTERS> cipher_array_;
-
-    // Generate a cipher array using a randomly generated shift.
-    const array<char, NUM_LETTERS> generate_cipher_array() {
-        array<char, NUM_LETTERS> generated;
-
-        // Generate a random shift in the range 1-25.
-        int shift = rand() % (NUM_LETTERS - 1) + 1;
-
-        for (int i = 0; i < NUM_LETTERS; i++) {
-            generated[(i + shift) % NUM_LETTERS] = 'A' + i;
-        }
-
-        return generated;
-    }
+    array<char, NUM_LETTERS> cipher_array_;
 };
 
 
