@@ -8,11 +8,19 @@
  *
  * Have the previous program convert the ciphertext back to the plaintext to
  * verify the encoding and decoding.
+ *
+ * To make the ciphertext problem even more challenging, have your pro-
+ * gram randomly generate the cipher array instead of a hard-coded const array.
+ * Effectively, this means placing a random character in each element of the
+ * array, but remember that you can’t substitute a letter for itself. So the first
+ * element can’t be A, and you can’t use the same letter for two substitutions—
+ * that is, if the first element is S, no other element can be S.
  */
 
 #include <iostream>
 #include <array>
 #include <string>
+#include <cstdlib>
 
 using std::cout;
 using std::cin;
@@ -21,148 +29,86 @@ using std::getline;
 using std::array;
 using std::string;
 
-void encrypt_user_message();
-void decrypt_user_message();
-const string encrypt_string(const string &plaintext);
-const string decrypt_string(const string &encrypted);
-
 const int NUM_LETTERS = 26;
 
-// Class that gives easy access to a cipher array via operator[]
-//
-// Usage e.g: cipher['G'] gives cipher value for letter G.
-class CipherAccess {
+// A Cipher represents a mapping between characters in a plaintext and
+// encrypted form.
+class Cipher {
   public:
+    // Construct by generating a random array.
+    Cipher() : cipher_array_(generate_cipher_array()) {}
+
     // Construct from a cipher array.
-    explicit CipherAccess(const array<char, NUM_LETTERS> cipher_array)
+    explicit Cipher(const array<char, NUM_LETTERS> cipher_array)
         : cipher_array_(cipher_array) {};
 
-    // operator[] provides read-access to the cipher value for a letter.
+    // Construct a new cipher that inverts this cipher.
+    Cipher inverse() const {
+        array<char, NUM_LETTERS> inverse_arr;
+
+        for (char c = 'A'; c <= 'Z'; ++c) {
+            inverse_arr[(*this)[c] - 'A'] = c;
+        }
+
+        return Cipher(inverse_arr);
+    }
+
+    // operator[] provides read-access to the cipher value for a single letter.
     const char &operator[](const char letter) const {
         return cipher_array_[letter - 'A'];
     }
 
-    // Construct a new cipher that inverts this cipher.
-    CipherAccess inverse() const {
-        array<char, NUM_LETTERS> inverse_arr;
+    // Convert a string using this cipher.
+    const string convert_string(const string &from) const {
+        string result;
+        result.reserve(from.size());
 
-        for (char c = 'A'; c < 'Z'; ++c) {
-            inverse_arr[cipher_array_[c - 'A'] - 'A'] = c;
+        for (char c : from) {
+            if (c >= 'A' && c <= 'Z') {
+                result.push_back((*this)[c]);
+            } else {
+                result.push_back(c);
+            }
         }
 
-        return CipherAccess(inverse_arr);
+        return result;
     }
 
   private:
+    // Array that defines the cipher mapping.
     const array<char, NUM_LETTERS> cipher_array_;
+
+    // Generate a cipher array using a randomly generated shift.
+    const array<char, NUM_LETTERS> generate_cipher_array() {
+        array<char, NUM_LETTERS> generated;
+
+        // Generate a random shift in the range 1-25.
+        int shift = rand() % (NUM_LETTERS - 1) + 1;
+
+        for (int i = 0; i < NUM_LETTERS; i++) {
+            generated[(i + shift) % NUM_LETTERS] = 'A' + i;
+        }
+
+        return generated;
+    }
 };
 
 
-const CipherAccess CIPHER({
-    'G',
-    'H',
-    'I',
-    'J',
-    'K',
-    'L',
-    'M',
-    'N',
-    'O',
-    'P',
-    'Q',
-    'R',
-    'S',
-    'T',
-    'U',
-    'V',
-    'W',
-    'X',
-    'Y',
-    'Z',
-    'A',
-    'B',
-    'C',
-    'D',
-    'E',
-    'F'
-});
-
-const CipherAccess INVERSE_CIPHER = CIPHER.inverse();
-
-
-// Either encrypt or decrypt a user's message.
+// Encrypt and then decrypt a message entered by the user.
 int main() {
-    string rsp;
-
-    cout << "(E)ncrypt or (D)ecrypt a message?" << endl << " > ";
-    getline(cin, rsp);
-
-    if (rsp[0] == 'E' || rsp[0] == 'e') {
-        cout << "Encrypting a message." << endl;
-        encrypt_user_message();
-    } else if (rsp[0] == 'D' || rsp[0] == 'd') {
-        cout << "Decrypting a message." << endl;
-        decrypt_user_message();
-    }
-
-    return 0;
-}
-
-
-// Read in a line of plaintext and output the encrypted line.
-void encrypt_user_message() {
+    const Cipher cipher;
+    const Cipher inverse_cipher = cipher.inverse();
     string plaintext;
 
     cout << "Enter the plaintext line:" << endl << " > ";
     getline(cin, plaintext);
 
-    const string encrypted = encrypt_string(plaintext);
+    const string encrypted = cipher.convert_string(plaintext);
     cout << "Encrypted: " << encrypted << endl;
-}
 
+    const string decrypted = inverse_cipher.convert_string(encrypted);
+    cout << "Decrypted: " << decrypted << endl;
 
-// Read in a line containing an encrypted message and output the decrypted
-// plaintext.
-void decrypt_user_message() {
-    string encrypted;
-
-    cout << "Enter the encrypted line:" << endl << " > ";
-    getline(cin, encrypted);
-
-    const string plaintext = decrypt_string(encrypted);
-    cout << "Plaintext: " << plaintext << endl;
-}
-
-// Convert a plaintext string into an encrypted string using the cipher.
-const string encrypt_string(const string &plaintext) {
-    string encrypted;
-    encrypted.reserve(plaintext.size());
-
-    for (char c : plaintext) {
-        if (c >= 'A' && c <= 'Z') {
-            encrypted.push_back(CIPHER[c]);
-        } else {
-            encrypted.push_back(c);
-        }
-    }
-
-    return encrypted;
-}
-
-
-// Convert an encrypted string into its decrypted plaintext.
-const string decrypt_string(const string &encrypted) {
-    string decrypted;
-    decrypted.reserve(encrypted.size());
-
-    for (char c : encrypted) {
-        if (c >= 'A' && c <= 'Z') {
-            decrypted.push_back(INVERSE_CIPHER[c]);
-        } else {
-            decrypted.push_back(c);
-        }
-    }
-
-    return decrypted;
+    return 0;
 }
 
