@@ -5,12 +5,12 @@
 #include <vector>
 #include <map>
 
-std::vector<int> get_input();
-std::vector<int> find_modes(const std::vector<int> &vec);
+std::vector<int> GetInput();
+std::vector<int> FindModes(const std::vector<int> &vec);
 
 int main() {
-    const std::vector<int> input = get_input();
-    const std::vector<int> modes = find_modes(input);
+    const std::vector<int> input = GetInput();
+    const std::vector<int> modes = FindModes(input);
 
     if (modes.size() > 0) {
         std::cout << "Mode(s) of input = " << modes.front();
@@ -26,7 +26,7 @@ int main() {
 }
 
 // Get a vector of input from the user.
-std::vector<int> get_input() {
+std::vector<int> GetInput() {
     std::vector<int> input;
     int num_inputs;
 
@@ -53,7 +53,7 @@ std::vector<int> get_input() {
 // Find the modal value(s) of a vector of ints. There may be multiple modes
 // if multiple values appear equally frequently, or there may be no mode
 // if every value appears with equal frequency.
-std::vector<int> find_modes(const std::vector<int> &input) {
+std::vector<int> FindModes(const std::vector<int> &input) {
     std::map<int, int> counts;
 
     // Count the number of occurences of each value.
