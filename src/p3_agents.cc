@@ -5,6 +5,11 @@
  * of values, the median is the simple average of the two values in the middle.
  * For example, in the set 10, 6, 2, 14, 7, 9, the values in the middle are 7 and 9.
  * The average of 7 and 9 is 8, so 8 is the median.
+ *
+ * Consider this modification of the sales array: Because salespeople come and
+ * go throughout the year, we are now marking months prior to a sales agent's
+ * hiring, or after a sales agent's last month, with a -1. Rewrite your highest
+ * sales average, or highest sales median, code to compensate.
  */
 #include <array>
 #include <iostream>
@@ -14,9 +19,9 @@ constexpr int kNumAgents = 3;
 constexpr int kNumMonths = 12;
 
 const std::array<const std::array<int, kNumMonths>, kNumAgents> kSales = {{
-    {1856, 498, 30924, 87478, 328, 2653, 387, 3754, 387587, 2873, 276, 32},
-    {5865, 5456, 3983, 6464, 9957, 4785, 3875, 3838, 4959, 1122, 7766, 2534},
-    {23, 55, 67, 99, 265, 376, 232, 223, 4546, 564, 4544, 3434}
+    {-1, -1, 30924, 87478, 328, 2653, 387, 3754, 387587, 2873, 276, 32},
+    {5865, 5456, 3983, 6464, 9957, 4785, 3875, 3838, 4959, 1122, 7766, -1},
+    {-1, 55, 67, 99, 265, 376, 232, 223, 4546, 564, -1, -1}
 }};
 
 double CalculateMedian(std::array<int, kNumMonths> sales);
@@ -47,13 +52,42 @@ int main() {
 
 
 // Calculate the median of a single agent's sales.
+// An agent's sales may start or end with -1s to signify them having not
+// started or left. Take this into account and only find the median of the
+// sub-set that is non-negative.
 double CalculateMedian(std::array<int, kNumMonths> sales) {
-    constexpr int kMiddle = kNumMonths / 2;
-    static_assert(kMiddle * 2 == kNumMonths,
-                  "Expected an even number of months.");
+    int start = 0;
+    int end = kNumMonths - 1;
 
-    std::sort(sales.begin(), sales.end());
+    while (sales[start] == -1 && start < kNumMonths) {
+        ++start;
+    }
 
-    return static_cast<double>(sales[kMiddle - 1] + sales[kMiddle]) / 2.0;
+    while (sales[end] == -1 && end > 0) {
+        --end;
+    }
+
+    // If the start and end overlap that must mean there are no valid sales
+    // figures, i.e. the array is all -1s. This is not valid data, so raise.
+    if (start > end) {
+        throw std::runtime_error("No valid sales figures found.");
+    }
+
+    const int num_sales = (end + 1) - start;
+    const int middle = (num_sales / 2) + start;
+    std::sort(sales.begin() + start, sales.begin() + end);
+
+    // If there were any -1s in the middle of the sales values, they will be
+    // sorted to the start of our sales. This is invalid data, so raise an
+    // exception.
+    if (sales[start] == -1) {
+        throw std::runtime_error("Only expect -1s at start or end of sales.");
+    }
+
+    if (num_sales % 2 == 0) {
+        return static_cast<double>(sales[middle - 1] + sales[middle]) / 2.0;
+    } else {
+        return static_cast<double>(sales[middle]);
+    }
 }
 
