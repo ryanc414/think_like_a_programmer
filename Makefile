@@ -1,14 +1,21 @@
-.PHONY: all, clean
+.PHONY: all, clean, P2, P3
 
 CC=g++
 CFLAGS=-Wall -Werror -g -Og
 
-all: bin/p2_hashes bin/p2_isbn bin/p2_binary bin/p2_words bin/p3_students \
-	 bin/p3_agents bin/p3_is_sorted bin/p3_cipher bin/p3_mode
+all: bin/P2 bin/P3
+
+bin/P2: bin/P2/binary bin/P2/hashes bin/P2/isbn bin/P2/words
+
+bin/P3: bin/P3/agents bin/P3/cipher bin/P3/is_sorted bin/P3/mode \
+		bin/P3/students
 
 clean:
-	rm -rf bin/*
+	rm -rf bin/P*/*
 
-bin/%: src/%.cc
+bin/P2/%: src/P2/%.cc
+	$(CC) $(CFLAGS) $< -o $@
+
+bin/P3/%: src/P3/%.cc
 	$(CC) $(CFLAGS) $< -o $@
 
