@@ -11,7 +11,6 @@
 #include <string>
 #include <array>
 #include <algorithm>
-#include <vector>
 
 struct Student {
     int grade;
@@ -44,7 +43,7 @@ const std::array<const Student, kArraySize> kStudents = {{
 int main() {
     std::array<const Student *, kArraySize> student_pointers;
 
-    // Set up a std::vector of pointers to the Students defined in the Student
+    // Set up an array of pointers to the Students defined in the Student
     // array. We will sort this pointer array for efficiency.
     for (int i = 0; i < kArraySize; ++i) {
         student_pointers[i] = &kStudents[i];
