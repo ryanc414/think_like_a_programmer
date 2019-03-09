@@ -22,7 +22,7 @@ int main() {
         throw std::range_error("Number of elements must be positive.");
     }
 
-    int *input_arr = new int[num_elements];
+    int input_arr[num_elements];
 
     for (int i = 0; i < num_elements; i++) {
         int next_el;
@@ -34,8 +34,6 @@ int main() {
 
     std::cout << "Input is sorted? " << std::boolalpha
               << IsSorted(input_arr, num_elements) << std::endl;
-
-    delete[] input_arr;
 
     return 0;
 }
