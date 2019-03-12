@@ -22,7 +22,13 @@
 // always re-allocate the underlying buffer so are relatively inefficient.
 class SizedString {
   public:
-    SizedString(const char *str) {
+    // Build an empty string.
+    SizedString() {
+        arr_ = new char;
+        *arr_ = 0;
+    }
+
+    explicit SizedString(const char *str) {
         // Get the length of the input string. Since we store the length as
         // the first element in a char array we cannot store strings that
         // are longer than CHAR_MAX.
@@ -37,11 +43,6 @@ class SizedString {
         memcpy(arr_ + 1, str, len);
     }
 
-    // Build an empty string.
-    SizedString() {
-        arr_ = new char;
-        *arr_ = 0;
-    }
 
     // Delete the allocated character buffer on destruction.
     ~SizedString() {
@@ -65,54 +66,60 @@ class SizedString {
         }
     }
 
-    // Append a character to the end of this string.
-    void Append(char Append_char) {
-        // Allocate a new buffer one char bigger than the last.
-        int old_len = GetLen();
-        char *new_arr = new char[old_len + 2];
-        int new_len = old_len + 1;
-        if (new_len > CHAR_MAX) {
-            throw std::out_of_range("Cannot append another char.");
-        }
-
-        // Fill up the new array with the incremented length, the old string
-        // and the Appended char.
-        new_arr[0] = old_len + 1;
-        memcpy(new_arr + 1, arr_ + 1, old_len);
-        new_arr[old_len + 1] = Append_char;
-
-        // Finally, delete the old array and assign the new one.
-        delete[] arr_;
-        arr_ = new_arr;
-    }
-
-    // Concatenate another string onto this one.
-    void Concatenate(const SizedString &other) {
-        // Allocate a new buffer to hold the Concatenated string.
-        int old_len = GetLen();
-        int new_len = old_len  + other.GetLen();
-        if (new_len > CHAR_MAX) {
-            throw std::out_of_range("Cannot concatenate the other string.");
-        }
-
-        char *new_arr = new char[new_len + 1];
-
-        // Fill up the new array with the new length, the old string and the
-        // Concatenated string.
-        new_arr[0] = new_len;
-        memcpy(new_arr + 1, arr_ + 1, old_len);
-        memcpy(new_arr + 1 + old_len, other.GetChars(), other.GetLen());
-
-        // Finally, delete the old array and assign the new one.
-        delete[] arr_;
-        arr_ = new_arr;
-    }
-
+    // Return the character at a specified index in the string.
     char CharacterAt(int index) const {
         if (index < 0 || index >= GetLen()) {
             throw std::out_of_range("Invalid index.");
         }
         return GetChars()[index];
+    }
+
+    // Append a character to the end of this string.
+    void Append(char Append_char) {
+        // Check that we have room for an extra character.
+        int new_len = GetLen() + 1;
+        if (new_len > CHAR_MAX) {
+            throw std::out_of_range("Cannot append another char.");
+        }
+
+        // Realloc the data array to hold the extra char and add it to the
+        // end. Increment the stored length.
+        arr_ = static_cast<char *>(realloc(arr_, new_len + 1));
+        ++arr_[0];
+        arr_[new_len] = Append_char;
+    }
+
+    // Concatenate another SizedString onto this one.
+    void Concatenate(const SizedString &other) {
+        // Check that we have room for an extra character.
+        int old_len = GetLen();
+        int new_len = old_len + other.GetLen();
+        if (new_len > CHAR_MAX) {
+            throw std::out_of_range("Cannot concatenate the other string.");
+        }
+
+        // Realloc our data array to hold the other string's characters and
+        // then copy the extra characters in. Update the stored length.
+        arr_ = static_cast<char *>(realloc(arr_, new_len + 1));
+        arr_[0] = new_len;
+        memcpy(arr_ + 1 + old_len, other.GetChars(), other.GetLen());
+    }
+
+    // Concatenate a regular NULL-terminated string onto this SizedString.
+    void Concatenate(const char *other) {
+        // Check that we have room for an extra character.
+        int old_len = GetLen();
+        int other_len = strlen(other);
+        int new_len = old_len  + other_len;
+        if (new_len > CHAR_MAX) {
+            throw std::out_of_range("Cannot concatenate the other string.");
+        }
+
+        // Realloc our data array to hold the other string's characters and
+        // then copy the extra characters in. Update the stored length.
+        arr_ = static_cast<char *>(realloc(arr_, new_len + 1));
+        arr_[0] = new_len;
+        memcpy(arr_ + 1 + old_len, other, other_len);
     }
 
   private:
@@ -127,30 +134,34 @@ std::ostream& operator<<(std::ostream &strm, SizedString const &str);
 // Test the SizedString methods Append, Concatenate and CharacterAt.
 int main() {
     // Allocate an empty string and concat some chars.
-    SizedString empty_str;
-    std::cout << "empty_str is: " << empty_str << std::endl;
-    empty_str.Concatenate("Not empty any more!");
-    std::cout << "empty_str is now: " << empty_str << std::endl;
+    SizedString string_1;
+    std::cout << "string_1 is: " << string_1 << std::endl;
+    string_1.Concatenate("Not empty any more!");
+    std::cout << "string_1 is now: " << string_1 << std::endl;
 
-    // Allocate a start string.
-    SizedString start_str{"This is my start string."};
-    std::cout << "start_str = " << start_str << std::endl;
+    // Allocate a second string.
+    SizedString string_2{"This is my start string."};
+    std::cout << "string_2 = " << string_2 << std::endl;
+
+    // Concatenate the first string into the second.
+    string_2.Concatenate(string_1);
+    std::cout << "string_2 + string_1 = " << string_2 << std::endl;
 
     // Append a couple of chars.
-    start_str.Append(' ');
-    start_str.Append('A');
-    std::cout << "after Append: start_str = " << start_str << std::endl;
+    string_2.Append(' ');
+    string_2.Append('A');
+    std::cout << "after Append: string_2 = " << string_2 << std::endl;
 
     // Concatenate another string.
-    start_str.Concatenate("nother string has been Concatenated.");
-    std::cout << "after concat: start_str = " << start_str << std::endl;
+    string_2.Concatenate("nother string has been Concatenated.");
+    std::cout << "after concat: string_2 = " << string_2 << std::endl;
 
     // Print the 11th char using CharacterAt. Printing the 999th char fails
     // with an out_of_range error.
-    std::cout << "11th char = " << start_str.CharacterAt(11) << std::endl;
+    std::cout << "11th char = " << string_2.CharacterAt(11) << std::endl;
     bool caught = false;
     try {
-        start_str.CharacterAt(999);
+        string_2.CharacterAt(999);
     } catch (std::out_of_range) {
         std::cout << "Caught out_of_range getting 999th char." << std::endl;
         caught = true;
@@ -165,7 +176,7 @@ int main() {
     int i = 0;
     try {
         for (i = 0; ; ++i) {
-            start_str.Append('a');
+            string_2.Append('a');
         }
     } catch (std::out_of_range) {
         std::cout << "Caught out_of_range on " << i << "th Append."
@@ -173,13 +184,13 @@ int main() {
     }
 
     // Concatenating an empty string at this point should be a valid no-op.
-    start_str.Concatenate("");
+    string_2.Concatenate("");
 
     // Finally, try concatenating another string. Since we previously tried
     // to append the max number of chars any non-empty string should fail.
     caught = false;
     try {
-        start_str.Concatenate("more");
+        string_2.Concatenate("more");
     } catch (std::out_of_range) {
         std::cout << "Caught out_of_range on concat." << std::endl;
         caught = true;
