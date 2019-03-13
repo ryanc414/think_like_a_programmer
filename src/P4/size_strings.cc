@@ -24,7 +24,7 @@ class SizedString {
   public:
     // Build an empty string.
     SizedString() {
-        arr_ = new char;
+        arr_ = static_cast<char *>(malloc(1));
         *arr_ = 0;
     }
 
@@ -38,15 +38,16 @@ class SizedString {
         }
 
         // Allocate and fill the array.
-        arr_ = new char[len + 1];
+        arr_ = static_cast<char *>(malloc(len + 1));
         arr_[0] = len;
         memcpy(arr_ + 1, str, len);
     }
 
 
+
     // Delete the allocated character buffer on destruction.
     ~SizedString() {
-        delete[] arr_;
+        free(arr_);
     }
 
     // Get the string's length.

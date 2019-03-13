@@ -16,8 +16,21 @@ struct ListNode {
 struct StudentCollection {
     ListNode *head;
 
+    // Construct an empty StudentCollection.
     StudentCollection() {
         head = nullptr;
+    }
+
+    // Free all student records on desctruction.
+    ~StudentCollection() {
+        ListNode *record = head;
+        ListNode *next_record;
+
+        while (record != nullptr) {
+            next_record = record->next;
+            delete record;
+            record = next_record;
+        }
     }
 
     // Adds a new record to the head of the list.
