@@ -63,7 +63,16 @@ class ListString {
         return char_list_.begin();
     }
 
+    std::list<char>::iterator begin() {
+        return char_list_.begin();
+    }
+
+
     std::list<char>::const_iterator end() const {
+        return char_list_.end();
+    }
+
+    std::list<char>::iterator end() {
         return char_list_.end();
     }
 
@@ -71,6 +80,40 @@ class ListString {
         for (char c : other) {
            char_list_.push_back(c);
         }
+    }
+
+    // Remove nodes starting from position up to position + length.
+    void RemoveNodes(int position, int length) {
+        if ((position < 0) || (length < 0)) {
+            throw std::out_of_range("Position and length must be positive");
+        }
+
+        // Get an iterator to the start and advance it to the desired
+        // position.
+        auto start = char_list_.begin();
+        int i = 0;
+        while ((i < position) && (start != char_list_.end())) {
+            ++start;
+            ++i;
+        }
+
+        if (i != position) {
+            throw std::out_of_range("No node at chosen position.");
+        }
+
+        // Now get another iterator and advance it to the desired length.
+        auto end = start;
+        i = 0;
+        while ((i < length) && (end != char_list_.end())) {
+            ++end;
+            ++i;
+        }
+
+        if (i != length) {
+            throw std::out_of_range("Cannot remove nodes from chosen range.");
+        }
+
+        char_list_.erase(start, end);
     }
 
 
@@ -82,6 +125,8 @@ std::ostream& operator<<(std::ostream &strm, ListString const &str);
 
 // Test the ListString methods.
 int main() {
+    // Assign a starting string and test appending, printing, getting specific
+    // chars and concatenating other ListStrings.
     ListString list_str("Starting string");
     std::cout << "list_str = " << list_str << std::endl;
     std::cout << "CharacterAt(3) = " << list_str.CharacterAt(3) << std::endl;
@@ -91,12 +136,43 @@ int main() {
     std::cout << "CharacterAt(15) = " << list_str.CharacterAt(15) << std::endl;
     assert(list_str.CharacterAt(15) == '!');
 
-    ListString *heap_str = new ListString("Concat me");
+    // Allocate another string on the heap and delete it after concatenating,
+    // this ensures we are copying the characters and not just making a
+    // reference to the list nodes in the other string.
+    ListString *heap_str = new ListString(" Concat me");
     list_str.Concatenate(*heap_str);
     delete heap_str;
     heap_str = nullptr;
 
     std::cout << "After concat: " << list_str << std::endl;
+
+    list_str.RemoveNodes(4, 4);
+    std::cout << "After removing chars: " << list_str << std::endl;
+
+    // Test some error cases.
+    try {
+        list_str.RemoveNodes(3, -2);
+    } catch (std::out_of_range &e) {
+        std::cout << "Caught out of range: " << e.what() << std::endl;
+    }
+
+    try {
+        list_str.RemoveNodes(-1, 2);
+    } catch (std::out_of_range &e) {
+        std::cout << "Caught out of range: " << e.what() << std::endl;
+    }
+
+    try {
+        list_str.RemoveNodes(2, 999);
+    } catch (std::out_of_range &e) {
+        std::cout << "Caught out of range: " << e.what() << std::endl;
+    }
+
+    try {
+        list_str.RemoveNodes(999, 2);
+    } catch (std::out_of_range &e) {
+        std::cout << "Caught out of range: " << e.what() << std::endl;
+    }
 
     return 0;
 }
