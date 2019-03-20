@@ -11,7 +11,7 @@ bin/P3: bin/P3/agents bin/P3/cipher bin/P3/is_sorted bin/P3/mode \
 		bin/P3/students
 
 bin/P4: bin/P4/substring bin/P4/size_strings bin/P4/remove_record \
-		bin/P4/list_strings
+		bin/P4/list_strings bin/P4/list_ints
 
 clean:
 	rm -rf bin/P*/*
