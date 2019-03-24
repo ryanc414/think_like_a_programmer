@@ -6,18 +6,26 @@
  * decisions concerning details like member names. It's not important that you
  * follow my particular naming convention. What'ss important is that you think
  * about the choices you make and are consistent in your decisions.
+ *
+ * 5-2. For our automobile class from the previous exercise, add a support method
+ * that returns a complete description of the automobile object as a formatted
+ * string, such as, "1957 Chevrolet Impala". Add a second support method that
+ * returns the age of the automobile in years.
  */
 
+#include <ctime>
 #include <iostream>
 #include <string>
-
+#include <sstream>
 
 // Automobile class storing manufacturer name, model name, and model year.
 class Automobile {
   public:
-    Automobile() = default;
+    // Constructors.
+    Automobile();
     Automobile(std::string manufacturer, std::string model, int year);
 
+    // Attribute get/set methods.
     std::string manufacturer() const;
     void set_manufacturer(std::string manufacturer);
     std::string model() const;
@@ -25,15 +33,24 @@ class Automobile {
     int year() const;
     void set_year(int year);
 
+    // Other support methods.
+    std::string description() const;
+    int age() const;
+
+    // Output stream formatter.
     friend std::ostream &
     operator<<(std::ostream &strm, Automobile const &automobile);
 
   private:
+    // Data members.
     std::string manufacturer_;
     std::string model_;
     int year_;
+    const int current_year_;
 
+    // Private helper methods.
     bool IsValidYear(int year);
+    int current_year() const;
 };
 
 // Test basic usage of the Automobile class.
@@ -54,12 +71,21 @@ int main() {
         std::cout << "Caught out_of_range: " << err.what() << std::endl;
     }
 
+    // Get the car's age.
+    std::cout << "car_b's age = " << car_b.age() << std::endl;
+
     return 0;
 }
 
+// Construct an empty Automobile.
+Automobile::Automobile() : current_year_(current_year()) {}
+
 // Construct a new Automobile from its manufacturer name, model and year.
 Automobile::Automobile(std::string manufacturer, std::string model, int year) :
-        manufacturer_(manufacturer), model_(model), year_(year) {
+        manufacturer_(manufacturer),
+        model_(model),
+        year_(year),
+        current_year_(current_year()) {
     if (!IsValidYear(year)) {
         throw std::out_of_range("Invalid year");
     }
@@ -98,19 +124,34 @@ void Automobile::set_year(int year) {
     year_ = year;
 }
 
+// Format and return a description string for this Automobile.
+std::string Automobile::description() const {
+    std::ostringstream ss;
+    ss << year() << " " << manufacturer() << " " << model();
+    return ss.str();
+}
+
+// Calculate and return this Automobile's age.
+int Automobile::age() const {
+    return current_year_ - year();
+}
+
 // Enable stream output of the Automobile.
 std::ostream & operator<<(std::ostream &strm, Automobile const &automobile) {
-    strm << "Automobile["
-         << automobile.manufacturer() << ", "
-         << automobile.model() << ", "
-         << automobile.year() << "]";
-
+    strm << automobile.description();
     return strm;
 }
 
-// Validate an Automobile's year. For our simple example a valid year must be
-// in the range 1900-2100.
+// Validate an Automobile's year. For our simple example an Automobile's year
+// must be at leat 1900 and must not exceed the current year.
 bool Automobile::IsValidYear(int year) {
-    return (year >= 1900) && (year < 2100);
+    return (year >= 1900) && (year <= current_year_);
+}
+
+// Get the current year that this program is being run in.
+int Automobile::current_year() const {
+    time_t theTime = std::time(NULL);
+    std::tm *aTime = std::localtime(&theTime);
+    return aTime->tm_year + 1900; // Year is # years since 1900
 }
 
