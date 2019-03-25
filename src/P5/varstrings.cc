@@ -8,6 +8,16 @@
  * characterAt method with an overloaded [] operator. For example, if myString
  * is an object of our class, then myString[1] should return the same result as
  * myString.characterAt(1).
+ *
+ * 5-5. For the variable-length string class of the previous exercises, add a remove
+ * method that takes a starting position and a number of characters and removes
+ * that many characters from the middle of the string. So myString.remove(5,3)
+ * would remove three characters starting at the fifth position. Make sure your
+ * method behaves when the value of either of the parameters is invalid.
+ *
+ * 5-6. Review your variable-length string class for possible refactoring. For example,
+ * is there any common functionality that can be separated into a private
+ * support method?
  */
 
 #include <cstring>
@@ -32,6 +42,7 @@ class String {
     // Other public methods.
     void Append(char next_char);
     void Concatenate(const String &other);
+    void Remove(size_t start, size_t len);
 
     // Output stream formatter.
     friend std::ostream & operator<<(std::ostream &strm, const String &str);
@@ -90,6 +101,22 @@ int main() {
         std::cout << "Caught out_of_range: " << err.what() << std::endl;
     }
 
+    // Test the Remove method, including with a couple of bad parameters.
+    str_e.Remove(5, 3);
+    std::cout << "After remove, str_e = " << str_e << std::endl;
+
+    try {
+        str_e.Remove(9999, 2);
+    } catch (std::out_of_range &err) {
+        std::cout << "Caught out_of_range: " << err.what() << std::endl;
+    }
+
+    try {
+        str_e.Remove(2, 9999);
+    } catch (std::out_of_range &err) {
+        std::cout << "Caught out_of_range: " << err.what() << std::endl;
+    }
+
     return 0;
 }
 
@@ -141,6 +168,7 @@ void String::Append(char next_char) {
     str_[new_len - 1] = next_char;
 }
 
+// Concatenate another String onto the end of this one.
 void String::Concatenate(const String &other) {
     // Reallocate the string buffer to make room for the concatenated string.
     size_t old_len = len_;
@@ -151,6 +179,29 @@ void String::Concatenate(const String &other) {
     strcpy(str_ + old_len, other.str_);
 }
 
+// Removes a specified number of characters from the string.
+void String::Remove(size_t start, size_t remove_len) {
+    if (start >= len_ || start + remove_len >= len_) {
+        throw std::out_of_range("Invalid remove parameters.");
+    }
+
+    // First make a copy of the original string.
+    char *orig_str = new char[len_ + 1];
+    strcpy(orig_str, str_);
+
+    // Realloc our string to the shorter length. This will chop off some chars
+    // from the end - which is why we first made a copy!
+    size_t new_len = len_ - remove_len;
+    Realloc(new_len);
+
+    // Finally, copy the chars after the end of the removal point from the
+    // original string into the realloc'd one.
+    strcpy(str_ + start, orig_str + start + remove_len);
+
+    // Free the temporary string.
+    delete[] orig_str;
+}
+
 // Output the String to a stream.
 std::ostream & operator<<(std::ostream &strm, const String &str) {
     strm << str.str_;
@@ -159,7 +210,7 @@ std::ostream & operator<<(std::ostream &strm, const String &str) {
 
 // Return the character at a specific index. Perform bounds checking.
 char String::operator[](size_t index) const {
-    if (index < 0 || index >= len_) {
+    if (index >= len_) {
         throw std::out_of_range("Bad index.");
     }
     return str_[index];
