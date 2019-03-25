@@ -3,11 +3,18 @@
  * and characterAt) and use them to create a class for variable-length strings,
  * making sure to implement all necessary constructors, a destructor, and an
  * overloaded assignment operator
+ *
+ * 5-4. For the variable-length string class of the previous exercise, replace the
+ * characterAt method with an overloaded [] operator. For example, if myString
+ * is an object of our class, then myString[1] should return the same result as
+ * myString.characterAt(1).
  */
 
 #include <cstring>
 #include <iostream>
 
+// Wrapper for a variable-length string - basically a home-made version of
+// std::string.
 class String {
   public:
     // Constructors and destructors.
@@ -20,11 +27,11 @@ class String {
     // Overloaded operators.
     String & operator=(const String &other);
     String & operator=(String &&other) noexcept;
+    char operator[](size_t index) const;
 
     // Other public methods.
     void Append(char next_char);
     void Concatenate(const String &other);
-    char CharacterAt(size_t index) const;
 
     // Output stream formatter.
     friend std::ostream & operator<<(std::ostream &strm, const String &str);
@@ -75,10 +82,10 @@ int main() {
     String str_e = std::move(str_b);
     std::cout << "str_e = " << str_e << std::endl;
 
-    // Test CharacterAt.
-    std::cout << "str_e[5] = " << str_e.CharacterAt(5) << std::endl;
+    // Test operator[].
+    std::cout << "str_e[5] = " << str_e[5] << std::endl;
     try {
-        str_e.CharacterAt(9999);
+        str_e[9999];
     } catch (std::out_of_range &err) {
         std::cout << "Caught out_of_range: " << err.what() << std::endl;
     }
@@ -150,11 +157,9 @@ std::ostream & operator<<(std::ostream &strm, const String &str) {
     return strm;
 }
 
-// Return the character at a specific index.
-char String::CharacterAt(size_t index) const {
-    // Calculating strlen() each time would be slow for long strings - could
-    // store the length separately for efficiency.
-    if (index < 0 || index >= strlen(str_)) {
+// Return the character at a specific index. Perform bounds checking.
+char String::operator[](size_t index) const {
+    if (index < 0 || index >= len_) {
         throw std::out_of_range("Bad index.");
     }
     return str_[index];
