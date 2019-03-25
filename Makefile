@@ -14,7 +14,7 @@ bin/P3: bin/P3/agents bin/P3/cipher bin/P3/is_sorted bin/P3/mode \
 bin/P4: bin/P4/substring bin/P4/size_strings bin/P4/remove_record \
 		bin/P4/list_strings bin/P4/list_ints
 
-bin/P5: bin/P5/automobile
+bin/P5: bin/P5/automobile bin/P5/varstrings
 
 clean:
 	rm -rf bin/P*/*
