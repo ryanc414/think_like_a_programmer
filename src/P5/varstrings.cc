@@ -24,7 +24,7 @@ class String {
     // Other public methods.
     void Append(char next_char);
     void Concatenate(const String &other);
-    char CharacterAt(int index) const;
+    char CharacterAt(size_t index) const;
 
     // Output stream formatter.
     friend std::ostream & operator<<(std::ostream &strm, const String &str);
@@ -33,8 +33,16 @@ class String {
     // Pointer to C string.
     char *str_;
 
-    // Helper method to allocate a copy of a C string.
-    char *CopyStr(const char *str);
+    // Length of string. Stored for efficiency to avoid multiple calls to
+    // strlen().
+    size_t len_;
+
+    // Helper methods to allocate a copy of a C string.
+    void CopyStr(const char *str);
+    void CopyStr(const char *str, size_t len);
+
+    // Helper method to re-allocate to a new size.
+    void Realloc(size_t new_len);
 };
 
 int main() {
@@ -67,18 +75,31 @@ int main() {
     String str_e = std::move(str_b);
     std::cout << "str_e = " << str_e << std::endl;
 
+    // Test CharacterAt.
+    std::cout << "str_e[5] = " << str_e.CharacterAt(5) << std::endl;
+    try {
+        str_e.CharacterAt(9999);
+    } catch (std::out_of_range &err) {
+        std::cout << "Caught out_of_range: " << err.what() << std::endl;
+    }
+
     return 0;
 }
 
 // Construct from a C string - copies the string contents into this String.
-String::String(const char *str) : str_(CopyStr(str)) {}
+String::String(const char *str) : str_(nullptr) {
+    CopyStr(str);
+}
 
 // Copy construct one String from another.
-String::String(const String &other) : str_(CopyStr(other.str_)) {}
+String::String(const String &other) : str_(nullptr) {
+    CopyStr(other.str_, other.len_);
+}
 
 // Move construct one String to another.
-String::String(String &&other) noexcept : str_(other.str_) {
+String::String(String &&other) noexcept : str_(other.str_), len_(other.len_) {
     other.str_ = nullptr;
+    other.len_ = 0;
 }
 
 // String destructor.
@@ -89,8 +110,7 @@ String::~String() {
 // Copy-assign one String to another.
 String & String::operator=(const String &other) {
     if (this != &other) {
-        delete[] str_;
-        str_ = CopyStr(other.str_);
+        CopyStr(other.str_, other.len_);
     }
 
     return *this;
@@ -100,39 +120,28 @@ String & String::operator=(const String &other) {
 String & String::operator=(String &&other) noexcept {
     str_ = other.str_;
     other.str_ = nullptr;
+    other.len_ = 0;
     return *this;
 }
 
 // Append another char to this String.
 void String::Append(char next_char) {
-    // Allocate a new string buffer.
-    const int new_len = strlen(str_) + 1;
-    char *new_str = new char[new_len + 1];
+    // Reallocate the string buffer to make room for the extra char.
+    size_t new_len = len_ + 1;
+    Realloc(new_len);
 
-    // Copy the old string to the new buffer and append the extra char.
-    strcpy(new_str, str_);
-    new_str[new_len - 1] = next_char;
-    new_str[new_len] = '\0';
-
-    // Delete the old string and update the pointer to the new buffer.
-    delete[] str_;
-    str_ = new_str;
+    // Append the extra char.
+    str_[new_len - 1] = next_char;
 }
 
 void String::Concatenate(const String &other) {
-    // Allocate a new string buffer.
-    const int old_len = strlen(str_);
-    const int new_len = old_len + strlen(other.str_);
-    char *new_str = new char[new_len + 1];
+    // Reallocate the string buffer to make room for the concatenated string.
+    size_t old_len = len_;
+    size_t new_len = old_len + other.len_;
+    Realloc(new_len);
 
-    // Copy the old string to the new buffer and concatenate the extra string.
-    strcpy(new_str, str_);
-    strcpy(new_str + old_len, other.str_);
-    new_str[new_len] = '\0';
-
-    // Delete the old string and update the pointer to the new buffer.
-    delete[] str_;
-    str_ = new_str;
+    // Copy in the extra string.
+    strcpy(str_ + old_len, other.str_);
 }
 
 // Output the String to a stream.
@@ -142,21 +151,44 @@ std::ostream & operator<<(std::ostream &strm, const String &str) {
 }
 
 // Return the character at a specific index.
-char String::CharacterAt(int index) const {
+char String::CharacterAt(size_t index) const {
     // Calculating strlen() each time would be slow for long strings - could
     // store the length separately for efficiency.
-    if (index < 0 || index >= static_cast<int>(strlen(str_))) {
+    if (index < 0 || index >= strlen(str_)) {
         throw std::out_of_range("Bad index.");
     }
     return str_[index];
 }
 
 // Allocate a copy of a C string.
-char *String::CopyStr(const char *str) {
-    const int len = strlen(str);
-    char *copy = new char[len + 1];
-    strcpy(copy, str);
+void String::CopyStr(const char *str) {
+    size_t len = strlen(str);
+    CopyStr(str, len);
+}
 
-    return copy;
+// Allocate a copy of a C string, whose length is already known.
+void String::CopyStr(const char *str, size_t len) {
+    if (str_ != nullptr) {
+        delete[] str_;
+    }
+
+    len_ = len;
+    str_ = new char[len_ + 1];
+    strcpy(str_, str);
+}
+
+// Helper function to re-allocate the string to a new size.
+void String::Realloc(size_t new_len) {
+    // Allocate a new string and copy the old one in. Use strncpy in case the
+    // new length is less than the old length (i.e. the string is being
+    // made smaller).
+    char *new_str = new char[new_len + 1];
+    strncpy(new_str, str_, new_len);
+    new_str[new_len] = '\0';
+
+    // Free the old string and re-assign the pointer.
+    delete[] str_;
+    str_ = new_str;
+    len_ = new_len;
 }
 
