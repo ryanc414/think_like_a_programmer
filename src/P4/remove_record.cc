@@ -15,7 +15,7 @@
 class StudentCollection {
   public:
     // Constructors and destructor.
-    StudentCollection() = default;
+    StudentCollection() : head_(nullptr) {};
     StudentCollection(const StudentCollection &other);
     StudentCollection(StudentCollection &&other);
     ~StudentCollection();
@@ -23,6 +23,7 @@ class StudentCollection {
     // Overloaded operators.
     StudentCollection & operator=(const StudentCollection &other);
     StudentCollection & operator=(StudentCollection &&other);
+    bool operator!=(const StudentCollection &other);
 
     // Other public member functions.
     void AddRecord(int student_num, int grade);
@@ -38,7 +39,7 @@ class StudentCollection {
     } *head_;
 
     void DeleteList();
-    ListNode *CopyList(ListNode *from);
+    void CopyList(const ListNode *from);
 };
 
 int main() {
@@ -66,16 +67,15 @@ int main() {
     assert(!sc.RemoveRecord(-7));
     assert(sc.CountRecords() == 3);
 
+    // Find the average grade.
+    std::cout << "Average grade = " << sc.AverageRecords() << std::endl;
+
     return 0;
 }
 
 // Copy constructor.
 StudentCollection::StudentCollection(const StudentCollection &other) {
-    for (ListNode *record = other.head_;
-         record != nullptr;
-         record = record->next) {
-        AddRecord(record->student_num, record->grade);
-    }
+    CopyList(other.head_);
 }
 
 // Move constructor.
@@ -86,18 +86,12 @@ StudentCollection::StudentCollection(StudentCollection &&other) {
 
 // Destructor.
 StudentCollection::~StudentCollection() {
-    ListNode *record = head;
-    ListNode *next_record;
-
-    while (record != nullptr) {
-        next_record = record->next;
-        delete record;
-        record = next_record;
-    }
+    DeleteList();
 }
 
 // Copy assignment.
-StudentCollection & operator=(const StudentCollection &other) {
+StudentCollection &
+StudentCollection::operator=(const StudentCollection &other) {
     if (*this != other) {
         DeleteList();
         CopyList(other.head_);
@@ -107,16 +101,32 @@ StudentCollection & operator=(const StudentCollection &other) {
 
 }
 
+// Move assignment.
+StudentCollection & StudentCollection::operator=(StudentCollection &&other) {
+    if (*this != other) {
+        DeleteList();
+        head_ = other.head_;
+        other.head_ = nullptr;
+    }
+
+    return *this;
+}
+
+// Inequality comparison.
+bool StudentCollection::operator!=(const StudentCollection &other) {
+    return head_ != other.head_;
+}
+
 // Adds a new record to the head of the list.
 void StudentCollection::AddRecord(int student_num, int grade) {
-    ListNode *new_record = new ListNode{student_num, grade, head};
-    head = new_record;
+    ListNode *new_record = new ListNode{student_num, grade, head_};
+    head_ = new_record;
 }
 
 // Remove a record that matches the given student num. Returns true if the
 // record was found and deleted, false otherwise.
 bool StudentCollection::RemoveRecord(int student_num) {
-    ListNode *record = head;
+    ListNode *record = head_;
     ListNode *prev_record = nullptr;
 
     // Loop through the list of students looking for a matching
@@ -125,7 +135,7 @@ bool StudentCollection::RemoveRecord(int student_num) {
         if (record->student_num == student_num) {
             // Remove the matching record from the list and delete it.
             if (prev_record == nullptr) {
-                head = record->next;
+                head_ = record->next;
             } else {
                 prev_record->next = record->next;
             }
@@ -143,19 +153,31 @@ bool StudentCollection::RemoveRecord(int student_num) {
 
 // Count the number of records in the collection.
 int StudentCollection::CountRecords() const {
-    ListNode *record = head;
     int count = 0;
 
-    while (record != nullptr) {
+    for (ListNode *record = head_; record != nullptr; record = record->next) {
         ++count;
-        record = record->next;
     }
 
     return count;
 }
 
-void StudentCollection::DeleteList(ListNode *) {
-    ListNode *record = head;
+// Return the average of all grades in the collection.
+double StudentCollection::AverageRecords() const {
+    double grade_sum = 0;
+    int count = 0;
+
+    for (ListNode *record = head_; record != nullptr; record = record->next) {
+        grade_sum += static_cast<double>(record->grade);
+        ++count;
+    }
+
+    return grade_sum / static_cast<double>(count);
+}
+
+// Delete all nodes from the StuentCollectin list.
+void StudentCollection::DeleteList() {
+    ListNode *record = head_;
     ListNode *next_record;
 
     while (record != nullptr) {
@@ -163,4 +185,16 @@ void StudentCollection::DeleteList(ListNode *) {
         delete record;
         record = next_record;
     }
+
+    head_ = nullptr;
+}
+
+// Copy another list into this one, appending to any existing list entries.
+void StudentCollection::CopyList(const ListNode *from) {
+    for (const ListNode *record = from;
+         record != nullptr;
+         record = record->next) {
+        AddRecord(record->student_num, record->grade);
+    }
+}
 
