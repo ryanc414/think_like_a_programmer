@@ -7,6 +7,12 @@
  * and use them to create a class representing a collection of student records, as
  * before, making sure to implement all necessary constructors, a destructor,
  * and an overloaded assignment operator.
+ *
+ * 5-8. For the student record collection class of the previous exercise, add a method
+ * RecordsWithinRange that takes a low grade and a high grade as parameters and
+ * returns a new collection consisting of the records in that range (the original
+ * collection is unaffected). For example, myCollection.RecordsWithinRange(75, 80)
+ * would return a collection of all records with grades in the range 75-80 inclusive.
  */
 
 #include <iostream>
@@ -30,6 +36,7 @@ class StudentCollection {
     bool RemoveRecord(int student_num);
     int CountRecords() const;
     double AverageRecords() const;
+    StudentCollection RecordsWithinRange(int lower, int upper);
 
   private:
     struct ListNode {
@@ -69,6 +76,17 @@ int main() {
 
     // Find the average grade.
     std::cout << "Average grade = " << sc.AverageRecords() << std::endl;
+
+    // Add some more records.
+    sc.AddRecord(84, 81);
+    sc.AddRecord(38, 43);
+    sc.AddRecord(75, 77);
+
+    // Filter the records into a new collection for grades between 70-90.
+    StudentCollection filtered_sc = sc.RecordsWithinRange(70, 90);
+    std::cout << "Have " << filtered_sc.CountRecords()
+              << " records within the range 70-90." << std::endl;
+    assert(filtered_sc.CountRecords() == 3);
 
     return 0;
 }
@@ -173,6 +191,20 @@ double StudentCollection::AverageRecords() const {
     }
 
     return grade_sum / static_cast<double>(count);
+}
+
+// Return a new StudentCollection containing records from this collection
+// with grades within the given range (inclusive).
+StudentCollection StudentCollection::RecordsWithinRange(int lower, int upper) {
+    StudentCollection new_collection;
+
+    for (ListNode *record = head_; record != nullptr; record = record->next) {
+        if ((record->grade >= lower) && (record->grade <= upper)) {
+            new_collection.AddRecord(record->student_num, record->grade);
+        }
+    }
+
+    return new_collection;
 }
 
 // Delete all nodes from the StuentCollectin list.
