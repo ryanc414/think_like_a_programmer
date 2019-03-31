@@ -22,7 +22,7 @@ std::string NormaliseInput(std::string input);
 void OutputChecksum(std::string input);
 void VerifyChecksum(std::string input);
 
-// Calculate the cheksum, reading the first 12 digits from stdin.
+// Calculate the checksum, reading the first 12 digits from stdin.
 int CalculateChecksum(std::string input) {
     long sum = 0;
 
