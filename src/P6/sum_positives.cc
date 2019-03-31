@@ -11,7 +11,8 @@ int SumPositivesIter(const int *arr, size_t size);
 int SumPositivesRecur(const int *arr, size_t size);
 
 
-
+// Test both iterative and recursive functions for summing the positive
+// values in an int array.
 int main() {
     constexpr size_t array_size = 10;
     const int arr[array_size] = {3, 3, 2, -1, -6, 2, -4, 9, -1, 2};
@@ -23,6 +24,10 @@ int main() {
     const int recur_sum = SumPositivesRecur(arr, array_size);
     std::cout << "Recursive sum of positives = " << recur_sum << std::endl;
     assert(recur_sum == 21);
+
+    // Test both functions on empty arrays - they should return 0.
+    assert(SumPositivesIter(nullptr, 0) == 0);
+    assert(SumPositivesRecur(nullptr, 0) == 0);
 
     return 0;
 }
