@@ -207,7 +207,7 @@ StudentCollection StudentCollection::RecordsWithinRange(int lower, int upper) {
     return new_collection;
 }
 
-// Delete all nodes from the StuentCollectin list.
+// Delete all nodes from the StudentCollection list.
 void StudentCollection::DeleteList() {
     ListNode *record = head_;
     ListNode *next_record;

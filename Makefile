@@ -4,7 +4,7 @@
 CC=g++
 CFLAGS=-Wall -Werror -g -Og
 
-all: bin/P2 bin/P3 bin/P4 bin/P5
+all: bin/P2 bin/P3 bin/P4 bin/P5 bin/P6
 
 bin/P2: bin/P2/binary bin/P2/hashes bin/P2/isbn bin/P2/words
 
@@ -15,6 +15,8 @@ bin/P4: bin/P4/substring bin/P4/size_strings bin/P4/student_collection \
 		bin/P4/list_strings bin/P4/list_ints
 
 bin/P5: bin/P5/automobile bin/P5/varstrings
+
+bin/P6: bin/P6/sum_positives
 
 clean:
 	rm -rf bin/P*/*
@@ -29,5 +31,8 @@ bin/P4/%: src/P4/%.cc
 	$(CC) $(CFLAGS) $< -o $@
 
 bin/P5/%: src/P5/%.cc
+	$(CC) $(CFLAGS) $< -o $@
+
+bin/P6/%: src/P6/%.cc
 	$(CC) $(CFLAGS) $< -o $@
 
