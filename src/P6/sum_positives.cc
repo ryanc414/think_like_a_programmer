@@ -13,9 +13,11 @@
 void test_sum_positives_array();
 void test_sum_positives_list();
 int SumPositivesIter(const int *arr, size_t size);
-int SumPositivesIter(const std::forward_list<int> int_list);
+int SumPositivesIter(const std::forward_list<int> &int_list);
 int SumPositivesRecur(const int *arr, size_t size);
-int SumPositivesRecur(const std::forward_list<int> int_list);
+int SumPositivesRecur(const std::forward_list<int> &int_list);
+int SumPositivesListRecur(std::forward_list<int>::const_iterator it,
+                          std::forward_list<int>::const_iterator end);
 
 // Test the sum positives functions for both arrays and lists.
 int main() {
@@ -32,12 +34,13 @@ int main() {
 void test_sum_positives_array() {
     constexpr size_t array_size = 10;
     const int arr[array_size] = {3, 3, 2, -1, -6, 2, -4, 9, -1, 2};
+    const int expected_sum = 21;
 
     const int iter_sum = SumPositivesIter(arr, array_size);
-    assert(iter_sum == 21);
+    assert(iter_sum == expected_sum);
 
     const int recur_sum = SumPositivesRecur(arr, array_size);
-    assert(recur_sum == 21);
+    assert(recur_sum == expected_sum);
 
     // Test both functions on empty arrays - they should return 0.
     assert(SumPositivesIter(nullptr, 0) == 0);
@@ -50,13 +53,13 @@ void test_sum_positives_list() {
     // Test the sum of positive ints in the list defined here.
     const std::forward_list<int> int_list(
         {8, 1, 2, -12, -2, 23, -4, 1, 98, -4, 0});
+    const int expected_sum = 133;
 
     const int iter_sum = SumPositivesIter(int_list);
-    std::cout << "Iterative positives sum of list = " << iter_sum << std::endl;
+    assert(iter_sum == expected_sum);
 
     const int recur_sum = SumPositivesRecur(int_list);
-    std::cout << "Recursive positives sum of list = " << recur_sum
-              << std::endl;
+    assert(recur_sum == expected_sum);
 
     // Test the sum of an empty list is 0.
     const std::forward_list<int> empty_list;
@@ -78,7 +81,7 @@ int SumPositivesIter(const int *arr, size_t size) {
 }
 
 // Sum the positive values in a list of ints using iteration.
-int SumPositivesIter(const std::forward_list<int> int_list) {
+int SumPositivesIter(const std::forward_list<int> &int_list) {
     int positives_sum = 0;
 
     for (auto it = int_list.begin(); it != int_list.end(); ++it) {
@@ -102,7 +105,19 @@ int SumPositivesRecur(const int *arr, size_t size) {
 }
 
 // Sum the positive values in a list of ints using recursion.
-int SumPositivesRecur(const std::forward_list<int> int_list) {
-    // TODO
+int SumPositivesRecur(const std::forward_list<int> &int_list) {
+    return SumPositivesListRecur(int_list.begin(), int_list.end());
+}
+
+// Recursively sum the positive values in a list of ints using list iterators.
+int SumPositivesListRecur(std::forward_list<int>::const_iterator it,
+                          std::forward_list<int>::const_iterator end) {
+    if (it == end) {
+        return 0;
+    } else if (*it > 0) {
+        return *it + SumPositivesListRecur(++it, end);
+    } else {
+        return SumPositivesListRecur(++it, end);
+    }
 }
 
