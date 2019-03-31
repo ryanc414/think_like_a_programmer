@@ -32,15 +32,15 @@ int main() {
 // Test both iterative and recursive functions for summing the positive
 // values in an int array.
 void test_sum_positives_array() {
-    constexpr size_t array_size = 10;
-    const int arr[array_size] = {3, 3, 2, -1, -6, 2, -4, 9, -1, 2};
-    const int expected_sum = 21;
+    constexpr size_t kArraySize = 10;
+    const int kArr[kArraySize] = {3, 3, 2, -1, -6, 2, -4, 9, -1, 2};
+    const int kExpectedSum = 21;
 
-    const int iter_sum = SumPositivesIter(arr, array_size);
-    assert(iter_sum == expected_sum);
+    const int iter_sum = SumPositivesIter(kArr, kArraySize);
+    assert(iter_sum == kExpectedSum);
 
-    const int recur_sum = SumPositivesRecur(arr, array_size);
-    assert(recur_sum == expected_sum);
+    const int recur_sum = SumPositivesRecur(kArr, kArraySize);
+    assert(recur_sum == kExpectedSum);
 
     // Test both functions on empty arrays - they should return 0.
     assert(SumPositivesIter(nullptr, 0) == 0);
@@ -51,20 +51,20 @@ void test_sum_positives_array() {
 // values in a list of ints.
 void test_sum_positives_list() {
     // Test the sum of positive ints in the list defined here.
-    const std::forward_list<int> int_list(
+    const std::forward_list<int> kIntList(
         {8, 1, 2, -12, -2, 23, -4, 1, 98, -4, 0});
-    const int expected_sum = 133;
+    const int kExpectedSum = 133;
 
-    const int iter_sum = SumPositivesIter(int_list);
-    assert(iter_sum == expected_sum);
+    const int iter_sum = SumPositivesIter(kIntList);
+    assert(iter_sum == kExpectedSum);
 
-    const int recur_sum = SumPositivesRecur(int_list);
-    assert(recur_sum == expected_sum);
+    const int recur_sum = SumPositivesRecur(kIntList);
+    assert(recur_sum == kExpectedSum);
 
     // Test the sum of an empty list is 0.
-    const std::forward_list<int> empty_list;
-    assert(SumPositivesIter(empty_list) == 0);
-    assert(SumPositivesRecur(empty_list) == 0);
+    const std::forward_list<int> kEmptyList;
+    assert(SumPositivesIter(kEmptyList) == 0);
+    assert(SumPositivesRecur(kEmptyList) == 0);
 }
 
 // Sum the positive values in an array of integers using iteration.
