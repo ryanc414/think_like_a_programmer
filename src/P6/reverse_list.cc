@@ -7,9 +7,10 @@
 #include <cassert>
 #include <forward_list>
 
-void ReverseList(std::forward_list<int> &list);
-void ReverseListRecur(std::forward_list<int> &list,
-                      std::forward_list<int>::const_iterator it);
+template <class T> void ReverseList(std::forward_list<T> &list);
+template <class T> void ReverseListRecur(
+    std::forward_list<T> &list,
+    typename std::forward_list<T>::const_iterator it);
 
 
 // Test the ReverseList function.
@@ -39,15 +40,16 @@ int main() {
 }
 
 // Reverses a forward_list in-place.
-void ReverseList(std::forward_list<int> &list) {
+template <class T> void ReverseList(std::forward_list<T> &list) {
     if (!list.empty()) {
         ReverseListRecur(list, list.begin());
     }
 }
 
 // Recursive step to reverse a forward_list in-place.
-void ReverseListRecur(std::forward_list<int> &list,
-                      std::forward_list<int>::const_iterator it) {
+template <class T> void ReverseListRecur(
+        std::forward_list<T> &list,
+        typename std::forward_list<T>::const_iterator it) {
     if (it != list.begin()) {
         list.push_front(*it);
     }
