@@ -4,11 +4,20 @@
  * with new. The term heap also describes a binary tree in which each node value
  * is higher than any in the left or right subtree. Write a recursive function to
  * determine whether a binary tree is a heap.
+ *
+ * A binary search tree is a binary tree in which each node value is greater than
+ * any value in that node's left subtree but less than any value in the node's
+ * right subtree. Write a recursive function to determine whether a binary tree
+ * is a binary search tree
  */
 
 #include <cassert>
 #include <iostream>
 #include <memory>
+
+void TestHeap();
+void TestBinarySearch();
+
 
 // Each node in a binary tree points to up to two child nodes.
 template <class T> class BinaryTree {
@@ -23,8 +32,8 @@ template <class T> class BinaryTree {
     BinaryTree<T> *right() const;
     void set_right(T right_val);
 
-    // Checks if the tree is a heap.
     bool IsHeap() const;
+    bool IsSearchTree() const;
 
   private:
     T value_;
@@ -32,8 +41,18 @@ template <class T> class BinaryTree {
     std::unique_ptr<BinaryTree<T>> right_;
 };
 
-// Test the BinaryTree heap checking.
+// Test the BinaryTree.
 int main() {
+    TestHeap();
+    TestBinarySearch();
+
+    std::cout << "All BinaryTree assertions passed." << std::endl;
+
+    return 0;
+}
+
+// Test the BinaryTree heap checking.
+void TestHeap() {
     BinaryTree<int> test_tree(528);
 
     // Check that a tree containing a single node is considered to be a heap.
@@ -54,10 +73,32 @@ int main() {
     // Add another node which invalidates the heap.
     test_tree.left()->left()->set_left(999);
     assert(!test_tree.IsHeap());
+}
 
-    std::cout << "All heap assertions passed." << std::endl;
+// Test the BinaryTree search tree checking.
+void TestBinarySearch() {
+    BinaryTree<int> test_tree(554);
 
-    return 0;
+    // Check that a tree containing a single node is considered to be a valid
+    // binary search tree.
+    assert(test_tree.IsSearchTree());
+
+    // Add a left and right value and assert the tree is still a valid BST.
+    test_tree.set_left(308);
+    test_tree.set_right(772);
+    assert(test_tree.IsSearchTree());
+
+    // Add more nodes under left and right and assert the tree is still a valid
+    // BST.
+    test_tree.left()->set_left(128);
+    test_tree.left()->set_right(443);
+    test_tree.right()->set_left(643);
+    test_tree.right()->set_right(875);
+    assert(test_tree.IsSearchTree());
+
+    // Add another node to invalidate the search tree.
+    test_tree.left()->left()->set_left(999);
+    assert(!test_tree.IsSearchTree());
 }
 
 // Checks if a binary tree is a heap. A heap is a tree in which every parent
