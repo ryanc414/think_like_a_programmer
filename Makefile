@@ -17,7 +17,7 @@ bin/P4: bin/P4/substring bin/P4/size_strings bin/P4/student_collection \
 bin/P5: bin/P5/automobile bin/P5/varstrings
 
 bin/P6: bin/P6/sum_positives bin/P6/binary_parity bin/P6/count_targets \
-        bin/P6/luhn_recur bin/P6/reverse_list
+        bin/P6/luhn_recur bin/P6/reverse_list bin/P6/heap
 
 clean:
 	rm -rf bin/P*/*
