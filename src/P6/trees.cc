@@ -5,19 +5,20 @@
  * is higher than any in the left or right subtree. Write a recursive function to
  * determine whether a binary tree is a heap.
  *
- * A binary search tree is a binary tree in which each node value is greater than
+ * 6-10. A binary search tree is a binary tree in which each node value is greater than
  * any value in that node's left subtree but less than any value in the node's
  * right subtree. Write a recursive function to determine whether a binary tree
  * is a binary search tree
  */
 
 #include <cassert>
+#include <algorithm>
 #include <iostream>
 #include <memory>
+#include <tuple>
 
 void TestHeap();
 void TestBinarySearch();
-
 
 // Each node in a binary tree points to up to two child nodes.
 template <class T> class BinaryTree {
@@ -39,6 +40,8 @@ template <class T> class BinaryTree {
     T value_;
     std::unique_ptr<BinaryTree<T>> left_;
     std::unique_ptr<BinaryTree<T>> right_;
+
+    std::tuple<bool, int, int> IsSearchTreeRecur_() const;
 };
 
 // Test the BinaryTree.
@@ -113,6 +116,51 @@ template <class T> bool BinaryTree<T>::IsHeap() const {
         return (value_ > right_->value_) && (right_->IsHeap());
     } else {
         return true;
+    }
+}
+
+template <class T> bool BinaryTree<T>::IsSearchTree() const {
+    return std::get<0>(IsSearchTreeRecur_());
+}
+
+// Recursively check if a tree is valid BST and return the lowest and highest
+// values in the tree.
+template <class T> std::tuple<bool, int, int>
+BinaryTree<T>::IsSearchTreeRecur_() const {
+    bool left_is_bst;
+    int left_lowest;
+    int left_highest;
+    bool right_is_bst;
+    int right_lowest;
+    int right_highest;
+
+    if ((left_ != nullptr) && (right_ != nullptr)) {
+        std::tie(left_is_bst, left_lowest, left_highest) =
+            left_->IsSearchTreeRecur_();
+        std::tie(right_is_bst, right_lowest, right_highest) =
+            right_->IsSearchTreeRecur_();
+
+        bool is_bst = (left_is_bst && (left_highest < value_)) &&
+                      (right_is_bst && (right_lowest > value_));
+        int lowest = std::min({left_lowest, right_lowest, value_});
+        int highest = std::max({left_highest, right_highest, value_});
+        return std::make_tuple(is_bst, lowest, highest);
+    } else if (left_ != nullptr) {
+        std::tie(left_is_bst, left_lowest, left_highest) =
+            left_->IsSearchTreeRecur_();
+        bool is_bst = left_is_bst && left_highest < value_;
+        int lowest = std::min(left_lowest, value_);
+        int highest = std::max(left_highest, value_);
+        return std::make_tuple(is_bst, lowest, highest);
+    } else if (right_ != nullptr) {
+        std::tie(right_is_bst, right_lowest, right_highest) =
+            right_->IsSearchTreeRecur_();
+        bool is_bst = right_is_bst && (right_lowest < value_);
+        int lowest = std::min(right_lowest, value_);
+        int highest = std::max(right_highest, value_);
+        return std::make_tuple(is_bst, lowest, highest);
+    } else {
+        return std::make_tuple(true, value_, value_);
     }
 }
 
