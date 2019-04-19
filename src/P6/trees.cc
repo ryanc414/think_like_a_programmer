@@ -9,6 +9,11 @@
  * any value in that node's left subtree but less than any value in the node's
  * right subtree. Write a recursive function to determine whether a binary tree
  * is a binary search tree
+ *
+ * 6-11. Write a recursive function that is passed a binary search tree's root pointer and
+ * a new value to be inserted and that creates a new node with the new value,
+ * placing it in the correct location to maintain the binary search tree structure.
+ * Hint: Consider making the root pointer parameter a reference parameter.
  */
 
 #include <cassert>
@@ -19,6 +24,7 @@
 
 void TestHeap();
 void TestBinarySearch();
+void TestInsert();
 
 // Each node in a binary tree points to up to two child nodes.
 template <class T> class BinaryTree {
@@ -32,22 +38,50 @@ template <class T> class BinaryTree {
     void set_left(T left_val);
     BinaryTree<T> *right() const;
     void set_right(T right_val);
+    T value() const;
+    void set_value(T new_value);
 
+    // Methods for checking the type of tree.
     bool IsHeap() const;
     bool IsSearchTree() const;
 
-  private:
+    // Overloaded operators.
+    bool operator==(const BinaryTree &other);
+
+  protected:
     T value_;
+
+  private:
     std::unique_ptr<BinaryTree<T>> left_;
     std::unique_ptr<BinaryTree<T>> right_;
-
     std::tuple<bool, int, int> IsSearchTreeRecur_() const;
 };
+
+// A Binary search tree is a binary tree where every node's value is greater
+// than any value in the left subtree and less than any value in the right
+// subtree.
+template <class T> class BinarySearchTree {
+  public:
+    // Constructor.
+    BinarySearchTree(T value) : tree_root_(value) {};
+
+    // Modifiers.
+    void InsertValue(T new_value);
+
+    // Overloaded operators.
+    bool operator==(const BinaryTree<T> &other);
+
+  private:
+    BinaryTree<T> tree_root_;
+    void InsertValueRecur_(T new_value, BinaryTree<T> &node);
+};
+
 
 // Test the BinaryTree.
 int main() {
     TestHeap();
     TestBinarySearch();
+    TestInsert();
 
     std::cout << "All BinaryTree assertions passed." << std::endl;
 
@@ -104,6 +138,28 @@ void TestBinarySearch() {
     assert(!test_tree.IsSearchTree());
 }
 
+// Test inserting values into a binary search tree.
+void TestInsert() {
+    BinarySearchTree<int> test_tree(482);
+
+    // Insert some values.
+    test_tree.InsertValue(837);
+    test_tree.InsertValue(321);
+    test_tree.InsertValue(443);
+    test_tree.InsertValue(780);
+
+    // Build the expected tree explicitly.
+    BinaryTree<int> expected_tree(482);
+    expected_tree.set_right(837);
+    expected_tree.set_left(321);
+    expected_tree.left()->set_right(443);
+    expected_tree.right()->set_left(780);
+    assert(expected_tree.IsSearchTree());
+
+    // Compare the test tree built from inserting values to the expected one.
+    assert(test_tree == expected_tree);
+}
+
 // Checks if a binary tree is a heap. A heap is a tree in which every parent
 // node has a greater value than its children.
 template <class T> bool BinaryTree<T>::IsHeap() const {
@@ -155,7 +211,7 @@ BinaryTree<T>::IsSearchTreeRecur_() const {
     } else if (right_ != nullptr) {
         std::tie(right_is_bst, right_lowest, right_highest) =
             right_->IsSearchTreeRecur_();
-        bool is_bst = right_is_bst && (right_lowest < value_);
+        bool is_bst = right_is_bst && (right_lowest > value_);
         int lowest = std::min(right_lowest, value_);
         int highest = std::max(right_highest, value_);
         return std::make_tuple(is_bst, lowest, highest);
@@ -176,7 +232,7 @@ template <class T> BinaryTree<T> *BinaryTree<T>::right() const {
 // Set methods for left and right sub-trees.
 template <class T> void BinaryTree<T>::set_left(T left_val) {
     if (left_ == nullptr) {
-        left_ = std::make_unique<BinaryTree<T>>(BinaryTree<T>(left_val));
+        left_ = std::make_unique<BinaryTree<T>>(left_val);
     } else {
         left_->value_ = left_val;
     }
@@ -184,9 +240,77 @@ template <class T> void BinaryTree<T>::set_left(T left_val) {
 
 template <class T> void BinaryTree<T>::set_right(T right_val) {
     if (right_ == nullptr) {
-        right_ = std::make_unique<BinaryTree<T>>(BinaryTree<T>(right_val));
+        right_ = std::make_unique<BinaryTree<T>>(right_val);
     } else {
         right_->value_ = right_val;
     }
+}
+
+// Get and set methods for the node value.
+template <class T> T BinaryTree<T>::value() const {
+    return value_;
+}
+
+template <class T> void BinaryTree<T>::set_value(T new_value) {
+    value_ = new_value;
+}
+
+// Check that two trees are equal: they contain the same values in the
+// same positions.
+template <class T> bool BinaryTree<T>::operator==(const BinaryTree &other) {
+    if ((left_ != nullptr) && (right_ != nullptr)) {
+        if ((other.left_ == nullptr) || (other.right_ == nullptr)) {
+            return false;
+        } else {
+            return (value_ == other.value_) &&
+                   (*left_ == *other.left_) &&
+                   (*right_ == *other.right_);
+        }
+    } else if (left_ != nullptr) {
+        if ((other.left_ == nullptr) || (other.right_ != nullptr)) {
+            return false;
+        } else {
+            return (value_ == other.value_) && (*left_ == *other.left_);
+        }
+    } else if (right_ != nullptr) {
+        if ((other.left_ != nullptr) || (other.right_ == nullptr)) {
+            return false;
+        } else {
+            return (value_ == other.value_) && (*right_ == *other.right_);
+        }
+    } else {
+        if ((other.left_ != nullptr) || (other.right_ != nullptr)) {
+            return false;
+        } else {
+            return value_ == other.value_;
+        }
+    }
+}
+
+// Insert a value into the correct position in this binary search tree.
+template <class T> void BinarySearchTree<T>::InsertValue(T new_value) {
+    InsertValueRecur_(new_value, tree_root_);
+}
+
+template <class T> void BinarySearchTree<T>::InsertValueRecur_(
+        T new_value, BinaryTree<T> &node) {
+    if (new_value > node.value()) {
+        if (node.right() == nullptr) {
+            node.set_right(new_value);
+        } else {
+            InsertValueRecur_(new_value, *node.right());
+        }
+    } else {
+        if (node.left() == nullptr) {
+            node.set_left(new_value);
+        } else {
+            InsertValueRecur_(new_value, *node.left());
+        }
+    }
+}
+
+template <class T> bool
+BinarySearchTree<T>::operator==(const BinaryTree<T> &other) {
+    return tree_root_ == other;
 }
 
