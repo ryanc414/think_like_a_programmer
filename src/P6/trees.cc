@@ -14,6 +14,11 @@
  * a new value to be inserted and that creates a new node with the new value,
  * placing it in the correct location to maintain the binary search tree structure.
  * Hint: Consider making the root pointer parameter a reference parameter.
+ *
+ * 6-12. Design your own: Consider basic statistical questions you can ask of a set of
+ * numerical values, such as average, median, mode, and so forth. Attempt to
+ * write recursive functions to compute those statistics for a binary tree of integers.
+ * Some are easier to write than others. Why?
  */
 
 #include <cassert>
@@ -25,6 +30,7 @@
 void TestHeap();
 void TestBinarySearch();
 void TestInsert();
+void TestStats();
 
 // Each node in a binary tree points to up to two child nodes.
 template <class T> class BinaryTree {
@@ -48,10 +54,8 @@ template <class T> class BinaryTree {
     // Overloaded operators.
     bool operator==(const BinaryTree &other);
 
-  protected:
-    T value_;
-
   private:
+    T value_;
     std::unique_ptr<BinaryTree<T>> left_;
     std::unique_ptr<BinaryTree<T>> right_;
     std::tuple<bool, int, int> IsSearchTreeRecur_() const;
@@ -65,6 +69,9 @@ template <class T> class BinarySearchTree {
     // Constructor.
     BinarySearchTree(T value) : tree_root_(value) {};
 
+    // Calculate the modal value.
+    T Mode() const;
+
     // Modifiers.
     void InsertValue(T new_value);
 
@@ -74,8 +81,20 @@ template <class T> class BinarySearchTree {
   private:
     BinaryTree<T> tree_root_;
     void InsertValueRecur_(T new_value, BinaryTree<T> &node);
+    std::tuple<T, int> ModeRecur_(const BinaryTree<T> &node) const;
 };
 
+// For binary search trees of ints, add two extra methods for calculating the
+// mean and median values.
+class IntBinarySearchTree : public BinarySearchTree<int> {
+  public:
+    // Inherit constructor from parent class.
+    using BinarySearchTree<int>::BinarySearchTree;
+
+    // Calculate statistical values.
+    double Mean() const;
+    int Median() const;
+};
 
 // Test the BinaryTree.
 int main() {
@@ -158,6 +177,27 @@ void TestInsert() {
 
     // Compare the test tree built from inserting values to the expected one.
     assert(test_tree == expected_tree);
+}
+
+// Test calculating statistical data for a binary search tree of ints.
+void TestStats() {
+    IntBinarySearchTree test_tree(532);
+
+    test_tree.InsertValue(213);
+    test_tree.InsertValue(334);
+    test_tree.InsertValue(920);
+    test_tree.InsertValue(732);
+    test_tree.InsertValue(334);
+    test_tree.InsertValue(565);
+
+    const double kExpectedMean = static_cast<double>(
+        532 + 213 + 334 + 920 + 732 + 334 + 565) / 7.0;
+    const int kExpectedMedian = 532;
+    const int kExpectedMode = 334;
+
+    assert(test_tree.Mean() == kExpectedMean);
+    assert(test_tree.Median() == kExpectedMedian);
+    assert(test_tree.Mode() == kExpectedMode);
 }
 
 // Checks if a binary tree is a heap. A heap is a tree in which every parent
@@ -312,5 +352,57 @@ template <class T> void BinarySearchTree<T>::InsertValueRecur_(
 template <class T> bool
 BinarySearchTree<T>::operator==(const BinaryTree<T> &other) {
     return tree_root_ == other;
+}
+
+// Calculate the mode of values in a binary search tree.
+template <class T> T BinarySearchTree<T>::Mode() const {
+    return std::get<0>(ModeRecur_(tree_root_));
+}
+
+// Recursive method to calculate the modal value and the number of times it
+// appears in a binary search tree under a given node.
+template <class T> std::tuple<T, int>
+BinarySearchTree<T>::ModeRecur_(const BinaryTree<T> &node) const {
+    T left_mode;
+    int left_modal_count;
+    T right_mode;
+    int right_modal_count;
+
+    if ((node.left() != nullptr) && (node.right() != nullptr)) {
+        std::tie(left_mode, left_modal_count) = ModeRecur_(*node.left());
+        std::tie(right_mode, right_modal_count) = ModeRecur_(*node.right());
+
+        if (left_mode == node.value()) {
+            ++left_modal_count;
+        } else if (right_mode == node.value()) {
+            ++right_modal_count;
+        }
+
+        if (left_modal_count > right_modal_count) {
+            return std::make_tuple(left_mode, left_modal_count);
+        } else if (right_modal_count > left_modal_count) {
+            return std::make_tuple(right_mode, right_modal_count);
+        } else {
+            return std::make_tuple(0, 0);
+        }
+    } else if (node.left() != nullptr) {
+        std::tie(left_mode, left_modal_count) = ModeRecur_(*node.left());
+
+        if (left_mode == node.value()) {
+            ++left_modal_count;
+        }
+
+        return std::make_tuple(left_mode, left_modal_count);
+    } else if (node.right() != nullptr) {
+        std::tie(right_mode, right_modal_count) = ModeRecur_(*node.right());
+
+        if (right_mode == node.value()) {
+            ++right_modal_count;
+        }
+
+        return std::make_tuple(right_mode, right_modal_count);
+    } else {
+        return std::make_tuple(node.value(), 1);
+    }
 }
 
