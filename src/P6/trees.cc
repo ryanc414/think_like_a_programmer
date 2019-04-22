@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <tuple>
 
 void TestHeap();
@@ -112,7 +113,9 @@ class IntBinarySearchTree : public BinarySearchTree<int> {
   private:
     std::tuple<int, int>
     SumAndCount_(const BinaryTree<int> &node) const;
-    int ValueAtIndex(int root_index) const;
+    int ValueAtIndex_(int index) const;
+    std::tuple<int, std::optional<int>>
+    ValueAtIndexRecur_(const BinaryTree<int> &node, int index) const;
 };
 
 // Test the BinaryTree.
@@ -120,6 +123,7 @@ int main() {
     TestHeap();
     TestBinarySearch();
     TestInsert();
+    TestStats();
 
     std::cout << "All BinaryTree assertions passed." << std::endl;
 
@@ -464,23 +468,59 @@ IntBinarySearchTree::SumAndCount_(const BinaryTree<int> &node) const {
 double IntBinarySearchTree::Median() const {
     int count = std::get<1>(SumAndCount_(this->tree_root_));
     if (count % 2 == 0) {
-        return static_cast<double>(ValueAtIndex((count / 2) - 1)) /
-               static_cast<double>(ValueAtIndex(count / 2));
+        return static_cast<double>(ValueAtIndex_((count / 2) - 1)) /
+               static_cast<double>(ValueAtIndex_(count / 2));
     } else {
-        return static_cast<double>(ValueAtIndex(count / 2));
+        return static_cast<double>(ValueAtIndex_(count / 2));
     }
 }
 
 // Get a value at a specified index in the ordering of values in a BST.
-int IntBinarySearchTree::ValueAtIndex(int target_index) const {
-    int curr_index;
-    for (auto it = begin(); it != end(); ++it) {
-        if (curr_index == target_index) {
-            return *it;
-        }
-        ++curr_index;
+int
+IntBinarySearchTree::ValueAtIndex_(int index) const {
+    std::optional<int> found_value = std::get<1>(ValueAtIndexRecur_(
+        this->tree_root_, index));
+    if (found_value) {
+        return *found_value;
+    } else {
+        throw std::out_of_range("No value was found.");
+    }
+}
+
+// Recursively traverse a binary search tree to find a value at a given index
+// in the ordering under this node. A tuple containing the number of nodes
+// searched and an optional found value is returned. If fewer nodes were found
+// than required to reach the index then the optional will be returned empty.
+std::tuple<int, std::optional<int>>
+IntBinarySearchTree::ValueAtIndexRecur_(const BinaryTree<int> &node,
+                                        int index) const {
+    int left_search_count = 0;
+    int right_search_count = 0;
+    std::optional<int> found_value;
+
+    if (index < 0) {
+        throw std::out_of_range("Index cannot be negative.");
     }
 
-    throw std::out_of_range("No value at specified index.");
+    if (node.left() != nullptr) {
+        std::tie(left_search_count, found_value) = ValueAtIndexRecur_(
+            *node.left(), index);
+        if (found_value) {
+            return std::make_tuple(left_search_count, found_value);
+        }
+    }
+
+    if (left_search_count == index) {
+        return std::make_tuple(left_search_count + 1, node.value());
+    }
+
+    if (node.right() != nullptr) {
+        std::tie(right_search_count, found_value) = ValueAtIndexRecur_(
+            *node.right(), index - left_search_count - 1);
+        return std::make_tuple(left_search_count + 1 + right_search_count,
+                               found_value);
+    }
+
+    return std::make_tuple(left_search_count + 1, std::nullopt);
 }
 
