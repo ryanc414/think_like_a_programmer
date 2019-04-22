@@ -78,10 +78,24 @@ template <class T> class BinarySearchTree {
     // Overloaded operators.
     bool operator==(const BinaryTree<T> &other);
 
-  private:
+    // Iterators.
+    class const_iterator {
+      public:
+        // Overloaded operators for iteration.
+        const_iterator operator++() const;
+        bool operator!=(const const_iterator &other) const;
+        const T operator*() const;
+    };
+    const_iterator begin() const;
+    const_iterator end() const;
+
+  protected:
     BinaryTree<T> tree_root_;
+
+  private:
     void InsertValueRecur_(T new_value, BinaryTree<T> &node);
     std::tuple<T, int> ModeRecur_(const BinaryTree<T> &node) const;
+
 };
 
 // For binary search trees of ints, add two extra methods for calculating the
@@ -93,7 +107,12 @@ class IntBinarySearchTree : public BinarySearchTree<int> {
 
     // Calculate statistical values.
     double Mean() const;
-    int Median() const;
+    double Median() const;
+
+  private:
+    std::tuple<int, int>
+    SumAndCount_(const BinaryTree<int> &node) const;
+    int ValueAtIndex(int root_index) const;
 };
 
 // Test the BinaryTree.
@@ -404,5 +423,64 @@ BinarySearchTree<T>::ModeRecur_(const BinaryTree<T> &node) const {
     } else {
         return std::make_tuple(node.value(), 1);
     }
+}
+
+// Calculate the mean of all values in a binary tree.
+double IntBinarySearchTree::Mean() const {
+    int sum;
+    int num_values;
+
+    std::tie(sum, num_values) = SumAndCount_(this->tree_root_);
+
+    return static_cast<double>(sum) / static_cast<double>(num_values);
+}
+
+// Recursively calculate the sum and count of values under each node in the
+// tree, so that the mean can be calculated.
+std::tuple<int, int>
+IntBinarySearchTree::SumAndCount_(const BinaryTree<int> &node) const {
+    int left_sum;
+    int left_count;
+    int right_sum;
+    int right_count;
+
+    if ((node.left() != nullptr) && (node.right() != nullptr)) {
+        std::tie(left_sum, left_count) = SumAndCount_(*node.left());
+        std::tie(right_sum, right_count) = SumAndCount_(*node.right());
+        return std::make_tuple(left_sum + right_sum + node.value(),
+                               left_count + right_count + 1);
+    } else if (node.left() != nullptr) {
+        std::tie(left_sum, left_count) = SumAndCount_(*node.left());
+        return std::make_tuple(left_sum + node.value(), left_count + 1);
+    } else if (node.right() != nullptr) {
+        std::tie(right_sum, right_count) = SumAndCount_(*node.right());
+        return std::make_tuple(right_sum + node.value(), right_count + 1);
+    } else {
+        return std::make_tuple(node.value(), 1);
+    }
+}
+
+// Calculate the median value in a binary search tree of ints.
+double IntBinarySearchTree::Median() const {
+    int count = std::get<1>(SumAndCount_(this->tree_root_));
+    if (count % 2 == 0) {
+        return static_cast<double>(ValueAtIndex((count / 2) - 1)) /
+               static_cast<double>(ValueAtIndex(count / 2));
+    } else {
+        return static_cast<double>(ValueAtIndex(count / 2));
+    }
+}
+
+// Get a value at a specified index in the ordering of values in a BST.
+int IntBinarySearchTree::ValueAtIndex(int target_index) const {
+    int curr_index;
+    for (auto it = begin(); it != end(); ++it) {
+        if (curr_index == target_index) {
+            return *it;
+        }
+        ++curr_index;
+    }
+
+    throw std::out_of_range("No value at specified index.");
 }
 
