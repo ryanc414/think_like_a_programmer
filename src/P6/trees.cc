@@ -34,19 +34,37 @@ void TestInsert();
 void TestStats();
 
 // Each node in a binary tree points to up to two child nodes.
-template <class T> class BinaryTree {
+template <class T> class BinaryTreeNode {
   public:
     // Constructor.
-    explicit BinaryTree(T value) :
+    explicit BinaryTreeNode(T value) :
         value_(value), left_(nullptr), right_(nullptr) {};
 
     // Attribute getters and setters.
-    BinaryTree<T> *left() const;
+    BinaryTreeNode<T> *left() const;
     void set_left(T left_val);
-    BinaryTree<T> *right() const;
+    BinaryTreeNode<T> *right() const;
     void set_right(T right_val);
     T value() const;
     void set_value(T new_value);
+
+    // Equality operator.
+    bool operator==(const BinaryTreeNode &other);
+
+  private:
+    T value_;
+    std::unique_ptr<BinaryTreeNode<T>> left_;
+    std::unique_ptr<BinaryTreeNode<T>> right_;
+};
+
+// A binary tree has a root node which links to other nodes in the tree.
+template <class T> class BinaryTree {
+  public:
+    // Constructor.
+    explicit BinaryTree(T value) : root_(value) {};
+
+    // Retrieve the tree root.
+    BinaryTreeNode<T> &root();
 
     // Methods for checking the type of tree.
     bool IsHeap() const;
@@ -55,20 +73,22 @@ template <class T> class BinaryTree {
     // Overloaded operators.
     bool operator==(const BinaryTree &other);
 
+  protected:
+    BinaryTreeNode<T> root_;
+
   private:
-    T value_;
-    std::unique_ptr<BinaryTree<T>> left_;
-    std::unique_ptr<BinaryTree<T>> right_;
-    std::tuple<bool, int, int> IsSearchTreeRecur_() const;
+    bool IsHeapRecur_(const BinaryTreeNode<T> &node) const;
+    std::tuple<bool, int, int>
+    IsSearchTreeRecur_(const BinaryTreeNode<T> &node) const;
 };
 
 // A Binary search tree is a binary tree where every node's value is greater
 // than any value in the left subtree and less than any value in the right
 // subtree.
-template <class T> class BinarySearchTree {
+template <class T> class BinarySearchTree : public BinaryTree<T> {
   public:
     // Constructor.
-    BinarySearchTree(T value) : tree_root_(value) {};
+    explicit BinarySearchTree(T value) : BinaryTree<T>(value) {};
 
     // Calculate the modal value.
     T Mode() const;
@@ -76,26 +96,9 @@ template <class T> class BinarySearchTree {
     // Modifiers.
     void InsertValue(T new_value);
 
-    // Overloaded operators.
-    bool operator==(const BinaryTree<T> &other);
-
-    // Iterators.
-    class const_iterator {
-      public:
-        // Overloaded operators for iteration.
-        const_iterator operator++() const;
-        bool operator!=(const const_iterator &other) const;
-        const T operator*() const;
-    };
-    const_iterator begin() const;
-    const_iterator end() const;
-
-  protected:
-    BinaryTree<T> tree_root_;
-
   private:
-    void InsertValueRecur_(T new_value, BinaryTree<T> &node);
-    std::tuple<T, int> ModeRecur_(const BinaryTree<T> &node) const;
+    void InsertValueRecur_(T new_value, BinaryTreeNode<T> &node);
+    std::tuple<T, int> ModeRecur_(const BinaryTreeNode<T> &node) const;
 
 };
 
@@ -103,8 +106,8 @@ template <class T> class BinarySearchTree {
 // mean and median values.
 class IntBinarySearchTree : public BinarySearchTree<int> {
   public:
-    // Inherit constructor from parent class.
-    using BinarySearchTree<int>::BinarySearchTree;
+    // Constructor.
+    explicit IntBinarySearchTree(int value) : BinarySearchTree<int>(value) {};
 
     // Calculate statistical values.
     double Mean() const;
@@ -112,13 +115,13 @@ class IntBinarySearchTree : public BinarySearchTree<int> {
 
   private:
     std::tuple<int, int>
-    SumAndCount_(const BinaryTree<int> &node) const;
+    SumAndCount_(const BinaryTreeNode<int> &node) const;
     int ValueAtIndex_(int index) const;
     std::tuple<int, std::optional<int>>
-    ValueAtIndexRecur_(const BinaryTree<int> &node, int index) const;
+    ValueAtIndexRecur_(const BinaryTreeNode<int> &node, int index) const;
 };
 
-// Test the BinaryTree.
+// Test the above binary tree classes.
 int main() {
     TestHeap();
     TestBinarySearch();
@@ -138,19 +141,20 @@ void TestHeap() {
     assert(test_tree.IsHeap());
 
     // Add a left and right value and assert the tree is still a heap.
-    test_tree.set_left(400);
-    test_tree.set_right(302);
+    BinaryTreeNode<int> &root = test_tree.root();
+    root.set_left(400);
+    root.set_right(302);
     assert(test_tree.IsHeap());
 
     // Add more nodes under left and right and assert the tree is still a heap.
-    test_tree.left()->set_left(350);
-    test_tree.left()->set_right(392);
-    test_tree.right()->set_left(200);
-    test_tree.right()->set_right(226);
+    root.left()->set_left(350);
+    root.left()->set_right(392);
+    root.right()->set_left(200);
+    root.right()->set_right(226);
     assert(test_tree.IsHeap());
 
     // Add another node which invalidates the heap.
-    test_tree.left()->left()->set_left(999);
+    root.left()->left()->set_left(999);
     assert(!test_tree.IsHeap());
 }
 
@@ -163,20 +167,21 @@ void TestBinarySearch() {
     assert(test_tree.IsSearchTree());
 
     // Add a left and right value and assert the tree is still a valid BST.
-    test_tree.set_left(308);
-    test_tree.set_right(772);
+    BinaryTreeNode<int> &root = test_tree.root();
+    root.set_left(308);
+    root.set_right(772);
     assert(test_tree.IsSearchTree());
 
     // Add more nodes under left and right and assert the tree is still a valid
     // BST.
-    test_tree.left()->set_left(128);
-    test_tree.left()->set_right(443);
-    test_tree.right()->set_left(643);
-    test_tree.right()->set_right(875);
+    root.left()->set_left(128);
+    root.left()->set_right(443);
+    root.right()->set_left(643);
+    root.right()->set_right(875);
     assert(test_tree.IsSearchTree());
 
     // Add another node to invalidate the search tree.
-    test_tree.left()->left()->set_left(999);
+    root.left()->left()->set_left(999);
     assert(!test_tree.IsSearchTree());
 }
 
@@ -192,10 +197,12 @@ void TestInsert() {
 
     // Build the expected tree explicitly.
     BinaryTree<int> expected_tree(482);
-    expected_tree.set_right(837);
-    expected_tree.set_left(321);
-    expected_tree.left()->set_right(443);
-    expected_tree.right()->set_left(780);
+    BinaryTreeNode<int> &root = expected_tree.root();
+
+    root.set_right(837);
+    root.set_left(321);
+    root.left()->set_right(443);
+    root.right()->set_left(780);
     assert(expected_tree.IsSearchTree());
 
     // Compare the test tree built from inserting values to the expected one.
@@ -223,104 +230,45 @@ void TestStats() {
     assert(test_tree.Mode() == kExpectedMode);
 }
 
-// Checks if a binary tree is a heap. A heap is a tree in which every parent
-// node has a greater value than its children.
-template <class T> bool BinaryTree<T>::IsHeap() const {
-    if ((left_ != nullptr) && (right_ != nullptr)) {
-        return (value_ > left_->value_) && (left_->IsHeap()) &&
-               (value_ > right_->value_) && (right_->IsHeap());
-    } else if (left_ != nullptr) {
-        return (value_ > left_->value_) && (left_->IsHeap());
-    } else if (right_ != nullptr) {
-        return (value_ > right_->value_) && (right_->IsHeap());
-    } else {
-        return true;
-    }
-}
-
-template <class T> bool BinaryTree<T>::IsSearchTree() const {
-    return std::get<0>(IsSearchTreeRecur_());
-}
-
-// Recursively check if a tree is valid BST and return the lowest and highest
-// values in the tree.
-template <class T> std::tuple<bool, int, int>
-BinaryTree<T>::IsSearchTreeRecur_() const {
-    bool left_is_bst;
-    int left_lowest;
-    int left_highest;
-    bool right_is_bst;
-    int right_lowest;
-    int right_highest;
-
-    if ((left_ != nullptr) && (right_ != nullptr)) {
-        std::tie(left_is_bst, left_lowest, left_highest) =
-            left_->IsSearchTreeRecur_();
-        std::tie(right_is_bst, right_lowest, right_highest) =
-            right_->IsSearchTreeRecur_();
-
-        bool is_bst = (left_is_bst && (left_highest < value_)) &&
-                      (right_is_bst && (right_lowest > value_));
-        int lowest = std::min({left_lowest, right_lowest, value_});
-        int highest = std::max({left_highest, right_highest, value_});
-        return std::make_tuple(is_bst, lowest, highest);
-    } else if (left_ != nullptr) {
-        std::tie(left_is_bst, left_lowest, left_highest) =
-            left_->IsSearchTreeRecur_();
-        bool is_bst = left_is_bst && left_highest < value_;
-        int lowest = std::min(left_lowest, value_);
-        int highest = std::max(left_highest, value_);
-        return std::make_tuple(is_bst, lowest, highest);
-    } else if (right_ != nullptr) {
-        std::tie(right_is_bst, right_lowest, right_highest) =
-            right_->IsSearchTreeRecur_();
-        bool is_bst = right_is_bst && (right_lowest > value_);
-        int lowest = std::min(right_lowest, value_);
-        int highest = std::max(right_highest, value_);
-        return std::make_tuple(is_bst, lowest, highest);
-    } else {
-        return std::make_tuple(true, value_, value_);
-    }
-}
-
-// Get methods for left and right sub-trees. The raw pointers are returned.
-template <class T> BinaryTree<T> *BinaryTree<T>::left() const {
+// Get methods for left and right child nodes. The raw pointers are returned.
+template <class T> BinaryTreeNode<T> *BinaryTreeNode<T>::left() const {
     return left_.get();
 }
 
-template <class T> BinaryTree<T> *BinaryTree<T>::right() const {
+template <class T> BinaryTreeNode<T> *BinaryTreeNode<T>::right() const {
     return right_.get();
 }
 
 // Set methods for left and right sub-trees.
-template <class T> void BinaryTree<T>::set_left(T left_val) {
+template <class T> void BinaryTreeNode<T>::set_left(T left_val) {
     if (left_ == nullptr) {
-        left_ = std::make_unique<BinaryTree<T>>(left_val);
+        left_ = std::make_unique<BinaryTreeNode<T>>(left_val);
     } else {
         left_->value_ = left_val;
     }
 }
 
-template <class T> void BinaryTree<T>::set_right(T right_val) {
+template <class T> void BinaryTreeNode<T>::set_right(T right_val) {
     if (right_ == nullptr) {
-        right_ = std::make_unique<BinaryTree<T>>(right_val);
+        right_ = std::make_unique<BinaryTreeNode<T>>(right_val);
     } else {
         right_->value_ = right_val;
     }
 }
 
 // Get and set methods for the node value.
-template <class T> T BinaryTree<T>::value() const {
+template <class T> T BinaryTreeNode<T>::value() const {
     return value_;
 }
 
-template <class T> void BinaryTree<T>::set_value(T new_value) {
+template <class T> void BinaryTreeNode<T>::set_value(T new_value) {
     value_ = new_value;
 }
 
-// Check that two trees are equal: they contain the same values in the
-// same positions.
-template <class T> bool BinaryTree<T>::operator==(const BinaryTree &other) {
+// Check that two nodes are equal: they have the same value and their left and
+// right child nodes are equal.
+template <class T> bool
+BinaryTreeNode<T>::operator==(const BinaryTreeNode &other) {
     if ((left_ != nullptr) && (right_ != nullptr)) {
         if ((other.left_ == nullptr) || (other.right_ == nullptr)) {
             return false;
@@ -350,13 +298,96 @@ template <class T> bool BinaryTree<T>::operator==(const BinaryTree &other) {
     }
 }
 
+// Retrieves the root node of the binary tree.
+template <class T> BinaryTreeNode<T> &BinaryTree<T>::root() {
+    return root_;
+}
+
+// Checks if a binary tree is a heap. A heap is a tree in which every parent
+// node has a greater value than its children.
+template <class T> bool BinaryTree<T>::IsHeap() const {
+    return IsHeapRecur_(root_);
+}
+
+// Recursive implementation for checking if a tree is a heap. A tree is a heap
+// if its root node is greater than the values of each of its left and right
+// children and if the sub-trees of its children are also heaps.
+template <class T> bool
+BinaryTree<T>::IsHeapRecur_(const BinaryTreeNode<T> &node) const {
+    if ((node.left() != nullptr) && (node.right() != nullptr)) {
+        return (node.value() > node.left()->value()) &&
+               IsHeapRecur_(*node.left()) &&
+               (node.value() > node.right()->value()) &&
+               IsHeapRecur_(*node.right());
+    } else if (node.left() != nullptr) {
+        return (node.value() > node.left()->value()) &&
+               (IsHeapRecur_(*node.right()));
+    } else if (node.right() != nullptr) {
+        return (node.value() > node.right()->value()) &&
+               (IsHeapRecur_(*node.left()));
+    } else {
+        return true;
+    }
+}
+
+template <class T> bool BinaryTree<T>::IsSearchTree() const {
+    return std::get<0>(IsSearchTreeRecur_(root_));
+}
+
+// Recursively check if a tree is valid BST and return the lowest and highest
+// values in the tree.
+template <class T> std::tuple<bool, int, int>
+BinaryTree<T>::IsSearchTreeRecur_(const BinaryTreeNode<T> &node) const {
+    bool left_is_bst;
+    int left_lowest;
+    int left_highest;
+    bool right_is_bst;
+    int right_lowest;
+    int right_highest;
+
+    if ((node.left() != nullptr) && (node.right() != nullptr)) {
+        std::tie(left_is_bst, left_lowest, left_highest) =
+            IsSearchTreeRecur_(*node.left());
+        std::tie(right_is_bst, right_lowest, right_highest) =
+            IsSearchTreeRecur_(*node.right());
+
+        bool is_bst = (left_is_bst && (left_highest < node.value())) &&
+                      (right_is_bst && (right_lowest > node.value()));
+        int lowest = std::min({left_lowest, right_lowest, node.value()});
+        int highest = std::max({left_highest, right_highest, node.value()});
+        return std::make_tuple(is_bst, lowest, highest);
+    } else if (node.left() != nullptr) {
+        std::tie(left_is_bst, left_lowest, left_highest) =
+            IsSearchTreeRecur_(*node.left());
+        bool is_bst = left_is_bst && left_highest < node.value();
+        int lowest = std::min(left_lowest, node.value());
+        int highest = std::max(left_highest, node.value());
+        return std::make_tuple(is_bst, lowest, highest);
+    } else if (node.right() != nullptr) {
+        std::tie(right_is_bst, right_lowest, right_highest) =
+            IsSearchTreeRecur_(*node.right());
+        bool is_bst = right_is_bst && (right_lowest > node.value());
+        int lowest = std::min(right_lowest, node.value());
+        int highest = std::max(right_highest, node.value());
+        return std::make_tuple(is_bst, lowest, highest);
+    } else {
+        return std::make_tuple(true, node.value(), node.value());
+    }
+}
+
+// Check if two binary trees are equal by recursively comparing from the root
+// node.
+template <class T> bool BinaryTree<T>::operator==(const BinaryTree<T> &other) {
+    return root_ == other.root_;
+}
+
 // Insert a value into the correct position in this binary search tree.
 template <class T> void BinarySearchTree<T>::InsertValue(T new_value) {
-    InsertValueRecur_(new_value, tree_root_);
+    InsertValueRecur_(new_value, this->root_);
 }
 
 template <class T> void BinarySearchTree<T>::InsertValueRecur_(
-        T new_value, BinaryTree<T> &node) {
+        T new_value, BinaryTreeNode<T> &node) {
     if (new_value > node.value()) {
         if (node.right() == nullptr) {
             node.set_right(new_value);
@@ -372,20 +403,15 @@ template <class T> void BinarySearchTree<T>::InsertValueRecur_(
     }
 }
 
-template <class T> bool
-BinarySearchTree<T>::operator==(const BinaryTree<T> &other) {
-    return tree_root_ == other;
-}
-
 // Calculate the mode of values in a binary search tree.
 template <class T> T BinarySearchTree<T>::Mode() const {
-    return std::get<0>(ModeRecur_(tree_root_));
+    return std::get<0>(ModeRecur_(this->root_));
 }
 
 // Recursive method to calculate the modal value and the number of times it
 // appears in a binary search tree under a given node.
 template <class T> std::tuple<T, int>
-BinarySearchTree<T>::ModeRecur_(const BinaryTree<T> &node) const {
+BinarySearchTree<T>::ModeRecur_(const BinaryTreeNode<T> &node) const {
     T left_mode;
     int left_modal_count;
     T right_mode;
@@ -434,7 +460,7 @@ double IntBinarySearchTree::Mean() const {
     int sum;
     int num_values;
 
-    std::tie(sum, num_values) = SumAndCount_(this->tree_root_);
+    std::tie(sum, num_values) = SumAndCount_(this->root_);
 
     return static_cast<double>(sum) / static_cast<double>(num_values);
 }
@@ -442,7 +468,7 @@ double IntBinarySearchTree::Mean() const {
 // Recursively calculate the sum and count of values under each node in the
 // tree, so that the mean can be calculated.
 std::tuple<int, int>
-IntBinarySearchTree::SumAndCount_(const BinaryTree<int> &node) const {
+IntBinarySearchTree::SumAndCount_(const BinaryTreeNode<int> &node) const {
     int left_sum;
     int left_count;
     int right_sum;
@@ -466,7 +492,7 @@ IntBinarySearchTree::SumAndCount_(const BinaryTree<int> &node) const {
 
 // Calculate the median value in a binary search tree of ints.
 double IntBinarySearchTree::Median() const {
-    int count = std::get<1>(SumAndCount_(this->tree_root_));
+    int count = std::get<1>(SumAndCount_(this->root_));
     if (count % 2 == 0) {
         return static_cast<double>(ValueAtIndex_((count / 2) - 1)) /
                static_cast<double>(ValueAtIndex_(count / 2));
@@ -479,7 +505,7 @@ double IntBinarySearchTree::Median() const {
 int
 IntBinarySearchTree::ValueAtIndex_(int index) const {
     std::optional<int> found_value = std::get<1>(ValueAtIndexRecur_(
-        this->tree_root_, index));
+        this->root_, index));
     if (found_value) {
         return *found_value;
     } else {
@@ -492,7 +518,7 @@ IntBinarySearchTree::ValueAtIndex_(int index) const {
 // searched and an optional found value is returned. If fewer nodes were found
 // than required to reach the index then the optional will be returned empty.
 std::tuple<int, std::optional<int>>
-IntBinarySearchTree::ValueAtIndexRecur_(const BinaryTree<int> &node,
+IntBinarySearchTree::ValueAtIndexRecur_(const BinaryTreeNode<int> &node,
                                         int index) const {
     int left_search_count = 0;
     int right_search_count = 0;
