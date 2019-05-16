@@ -13,10 +13,29 @@
  * returns a new collection consisting of the records in that range (the original
  * collection is unaffected). For example, myCollection.RecordsWithinRange(75, 80)
  * would return a collection of all records with grades in the range 75-80 inclusive.
+ *
+ * 7-1. A complaint offered against the policy/strategy pattern is that it requires exposing
+ * some internals of the class, such as types. Modify the first student program
+ * from earlier in this chapter so that the policy functions are all stored within
+ * the class and are chosen by passing a code value (of a new, enumerated type,
+ * for example), instead of passing the policy function itself.
  */
 
 #include <iostream>
+#include <string>
 #include <cassert>
+
+struct StudentRecord {
+    int number;
+    int grade;
+    std::string name;
+};
+
+enum class FirstStudentPolicy {
+    kHigherGrade,
+    kLowerStudentNum,
+    kNameComesFirst
+};
 
 class StudentCollection {
   public:
@@ -32,31 +51,39 @@ class StudentCollection {
     bool operator!=(const StudentCollection &other);
 
     // Other public member functions.
-    void AddRecord(int student_num, int grade);
+    void AddRecord(int student_num, int grade, std::string name);
     bool RemoveRecord(int student_num);
     int CountRecords() const;
     double AverageRecords() const;
     StudentCollection RecordsWithinRange(int lower, int upper);
+    StudentRecord *FirstStudent(FirstStudentPolicy policy) const;
 
   private:
     struct ListNode {
-        int student_num;
-        int grade;
+        StudentRecord student;
         ListNode *next;
     } *head_;
 
     void DeleteList();
     void CopyList(const ListNode *from);
+    StudentRecord *HighestGradeStudent_() const;
+    StudentRecord *LowestNumStudent_() const;
+    StudentRecord *FirstNameStudent_() const;
 };
+
+std::ostream &
+operator<<(std::ostream &stream, const StudentRecord &student);
+void TestFirstStudent(StudentCollection &sc);
+
 
 int main() {
     StudentCollection sc;
 
     // Add four records to the collection.
-    sc.AddRecord(44, 87);
-    sc.AddRecord(55, 54);
-    sc.AddRecord(21, 92);
-    sc.AddRecord(11, 25);
+    sc.AddRecord(44, 87, "Andy");
+    sc.AddRecord(55, 54, "Bill");
+    sc.AddRecord(21, 92, "Charlie");
+    sc.AddRecord(11, 25, "David");
 
     // Should have 4 records.
     std::cout << "Have " << sc.CountRecords() << " records in collection."
@@ -78,9 +105,9 @@ int main() {
     std::cout << "Average grade = " << sc.AverageRecords() << std::endl;
 
     // Add some more records.
-    sc.AddRecord(84, 81);
-    sc.AddRecord(38, 43);
-    sc.AddRecord(75, 77);
+    sc.AddRecord(84, 81, "Emily");
+    sc.AddRecord(38, 43, "Frances");
+    sc.AddRecord(75, 77, "Geraldine");
 
     // Filter the records into a new collection for grades between 70-90.
     StudentCollection filtered_sc = sc.RecordsWithinRange(70, 90);
@@ -88,7 +115,29 @@ int main() {
               << " records within the range 70-90." << std::endl;
     assert(filtered_sc.CountRecords() == 3);
 
+    TestFirstStudent(sc);
+
     return 0;
+}
+
+// Test the FirstStudent method on all three policies.
+void TestFirstStudent(StudentCollection &sc) {
+    StudentRecord *student = sc.FirstStudent(FirstStudentPolicy::kHigherGrade);
+    assert(student != nullptr);
+    std::cout << "Highest grade student = " << *student << std::endl;
+    assert(student->number == 44);
+
+    student = sc.FirstStudent(FirstStudentPolicy::kLowerStudentNum);
+    assert(student != nullptr);
+    std::cout << "Lowest number student = " << *student << std::endl;
+    assert(student->number == 11);
+
+    student = sc.FirstStudent(FirstStudentPolicy::kNameComesFirst);
+    assert(student != nullptr);
+    std::cout << "Alphabetically first student = " << *student << std::endl;
+    assert(student->number == 44);
+
+    std::cout << "FirstStudent assertions passed." << std::endl;
 }
 
 // Copy constructor.
@@ -136,8 +185,9 @@ bool StudentCollection::operator!=(const StudentCollection &other) {
 }
 
 // Adds a new record to the head of the list.
-void StudentCollection::AddRecord(int student_num, int grade) {
-    ListNode *new_record = new ListNode{student_num, grade, head_};
+void
+StudentCollection::AddRecord(int student_num, int grade, std::string name) {
+    ListNode *new_record = new ListNode{{student_num, grade, name}, head_};
     head_ = new_record;
 }
 
@@ -150,7 +200,7 @@ bool StudentCollection::RemoveRecord(int student_num) {
     // Loop through the list of students looking for a matching
     // student_num.
     while (record != nullptr) {
-        if (record->student_num == student_num) {
+        if (record->student.number == student_num) {
             // Remove the matching record from the list and delete it.
             if (prev_record == nullptr) {
                 head_ = record->next;
@@ -186,7 +236,7 @@ double StudentCollection::AverageRecords() const {
     int count = 0;
 
     for (ListNode *record = head_; record != nullptr; record = record->next) {
-        grade_sum += static_cast<double>(record->grade);
+        grade_sum += static_cast<double>(record->student.grade);
         ++count;
     }
 
@@ -199,8 +249,11 @@ StudentCollection StudentCollection::RecordsWithinRange(int lower, int upper) {
     StudentCollection new_collection;
 
     for (ListNode *record = head_; record != nullptr; record = record->next) {
-        if ((record->grade >= lower) && (record->grade <= upper)) {
-            new_collection.AddRecord(record->student_num, record->grade);
+        if ((record->student.grade >= lower) &&
+            (record->student.grade <= upper)) {
+            new_collection.AddRecord(record->student.number,
+                                     record->student.grade,
+                                     record->student.name);
         }
     }
 
@@ -226,7 +279,85 @@ void StudentCollection::CopyList(const ListNode *from) {
     for (const ListNode *record = from;
          record != nullptr;
          record = record->next) {
-        AddRecord(record->student_num, record->grade);
+        AddRecord(record->student.number,
+                  record->student.grade,
+                  record->student.name);
     }
+}
+
+// Returns the "first" student in the collection according to the chosen
+// policy.
+StudentRecord *
+StudentCollection::FirstStudent(FirstStudentPolicy policy) const {
+    switch (policy) {
+        case FirstStudentPolicy::kHigherGrade:
+            return HighestGradeStudent_();
+
+        case FirstStudentPolicy::kLowerStudentNum:
+            return LowestNumStudent_();
+
+        case FirstStudentPolicy::kNameComesFirst:
+            return FirstNameStudent_();
+
+        // Even though we covered all possible enums, a default case is
+        // still required to silence "control reaches end of non-void function"
+        // compile error.
+        default:
+            throw std::runtime_error("Invalid first student policy");
+    }
+}
+
+StudentRecord *StudentCollection::HighestGradeStudent_() const {
+    ListNode *record = head_;
+    StudentRecord *highest_grade_student = nullptr;
+
+    while (record != nullptr) {
+        if ((highest_grade_student == nullptr) ||
+            (record->student.grade > highest_grade_student->grade)) {
+            highest_grade_student = &record->student;
+        }
+        record = record->next;
+    }
+
+    return highest_grade_student;
+}
+
+StudentRecord *StudentCollection::LowestNumStudent_() const {
+    ListNode *record = head_;
+    StudentRecord *lowest_num_student = nullptr;
+
+    while (record != nullptr) {
+        if ((lowest_num_student == nullptr) ||
+            (record->student.number < lowest_num_student->number)) {
+            lowest_num_student = &record->student;
+        }
+        record = record->next;
+    }
+
+    return lowest_num_student;
+}
+
+StudentRecord *StudentCollection::FirstNameStudent_() const {
+    ListNode *record = head_;
+    StudentRecord *first_name_student = nullptr;
+
+    while (record != nullptr) {
+        if ((first_name_student == nullptr) ||
+            (record->student.name < first_name_student->name)) {
+            first_name_student = &record->student;
+        }
+        record = record->next;
+    }
+
+    return first_name_student;
+}
+
+// Enable a StudentRecord to be printed to stdout.
+std::ostream &
+operator<<(std::ostream &stream, const StudentRecord &student) {
+    stream << "Student[number = " << student.number
+           << ", grade = " << student.grade
+           << ", name = " << student.name;
+    return stream;
 }
 
