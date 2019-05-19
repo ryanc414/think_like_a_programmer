@@ -9,14 +9,7 @@
 #include <cassert>
 #include <list>
 
-struct StudentRecord {
-    StudentRecord(int number, int grade, std::string name) :
-        number(number), grade(grade), name(name) {};
-
-    int number;
-    int grade;
-    std::string name;
-};
+#include "student.hh"
 
 enum class FirstStudentPolicy {
     kHigherGrade,
