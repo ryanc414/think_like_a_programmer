@@ -19,6 +19,13 @@
  * numerical values, such as average, median, mode, and so forth. Attempt to
  * write recursive functions to compute those statistics for a binary tree of integers.
  * Some are easier to write than others. Why?
+ *
+ * 7-4. For the problem in 7-3, implement a solution by implementing an abstract
+ * data type that allows an arbitrary number of items to be stored and individual
+ * records to be retrieved based on a key value. A generic term for a structure
+ * that can efficiently store and retrieve items based on a key value is a symbol
+ * table, and common implementations of the symbol table idea are hash tables
+ * and binary search trees.
  */
 
 #include <cassert>
@@ -32,6 +39,7 @@ void TestHeap();
 void TestBinarySearch();
 void TestInsert();
 void TestStats();
+void TestStudentsBST();
 
 // Each node in a binary tree points to up to two child nodes.
 template <class T> class BinaryTreeNode {
@@ -121,12 +129,39 @@ class IntBinarySearchTree : public BinarySearchTree<int> {
     ValueAtIndexRecur_(const BinaryTreeNode<int> &node, int index) const;
 };
 
+// Student struct - will be stored in a BST for searching.
+struct StudentRecord {
+    StudentRecord(int number, int grade, std::string name) :
+        number(number), grade(grade), name(name) {};
+
+    int number;
+    int grade;
+    std::string name;
+
+    bool operator<(const StudentRecord &other) const;
+    bool operator>(const StudentRecord &other) const;
+};
+
+// Searchable BST of student records.
+class StudentsBST : public BinarySearchTree<StudentRecord> {
+  public:
+    explicit StudentsBST(const StudentRecord &first_student) :
+        BinarySearchTree<StudentRecord>(first_student) {};
+    const StudentRecord *Search(int student_id) const;
+
+  private:
+    const StudentRecord *
+    SearchRecur_(const BinaryTreeNode<StudentRecord> &node,
+                 int student_id) const;
+};
+
 // Test the above binary tree classes.
 int main() {
     TestHeap();
     TestBinarySearch();
     TestInsert();
     TestStats();
+    TestStudentsBST();
 
     std::cout << "All BinaryTree assertions passed." << std::endl;
 
@@ -228,6 +263,35 @@ void TestStats() {
     assert(test_tree.Mean() == kExpectedMean);
     assert(test_tree.Median() == kExpectedMedian);
     assert(test_tree.Mode() == kExpectedMode);
+}
+
+// Test the StudentsBST object.
+void TestStudentsBST() {
+    // Build a BST containing 10 students.
+    StudentsBST students(StudentRecord(43, 66, "Alice"));
+
+    students.InsertValue(StudentRecord(23, 73, "Bob"));
+    students.InsertValue(StudentRecord(33, 83, "Carlie"));
+    students.InsertValue(StudentRecord(41, 92, "David"));
+    students.InsertValue(StudentRecord(72, 88, "Emily"));
+    students.InsertValue(StudentRecord(54, 62, "Frank"));
+    students.InsertValue(StudentRecord(66, 79, "Gregory"));
+    students.InsertValue(StudentRecord(21, 62, "Henrietta"));
+    students.InsertValue(StudentRecord(16, 52, "Isaac"));
+    students.InsertValue(StudentRecord(57, 80, "Jessica"));
+
+    // Search for the student with ID 41.
+    const StudentRecord *found_student = students.Search(41);
+    assert(found_student != nullptr);
+    assert(found_student->number == 41);
+    assert(found_student->grade == 92);
+    assert(found_student->name == "David");
+
+    // Try searching for a student with a non-existent ID - nullptr should
+    // be returned.
+    assert(students.Search(50) == nullptr);
+
+    std::cout << "All student BST assertions passed." << std::endl;
 }
 
 // Get methods for left and right child nodes. The raw pointers are returned.
@@ -548,5 +612,36 @@ IntBinarySearchTree::ValueAtIndexRecur_(const BinaryTreeNode<int> &node,
     }
 
     return std::make_tuple(left_search_count + 1, std::nullopt);
+}
+
+// Compare student records by their ID number for ordering.
+bool StudentRecord::operator<(const StudentRecord &other) const {
+    return number < other.number;
+}
+
+bool StudentRecord::operator>(const StudentRecord &other) const {
+    return number > other.number;
+}
+
+// Search for a student in the BST by its ID.
+const StudentRecord *StudentsBST::Search(int student_id) const {
+    return SearchRecur_(this->root_, student_id);
+}
+
+// Recursively search for a student with a given ID.
+const StudentRecord *
+StudentsBST::SearchRecur_(const BinaryTreeNode<StudentRecord> &node,
+                          int student_id) const {
+    const StudentRecord &student = node.value();
+
+    if (student.number == student_id) {
+        return &student;
+    } else if ((student_id < student.number) && (node.left() != nullptr)) {
+        return SearchRecur_(*node.left(), student_id);
+    } else if ((student_id > student.number) && (node.right() != nullptr)) {
+        return SearchRecur_(*node.right(), student_id);
+    } else {
+        return nullptr;
+    }
 }
 
