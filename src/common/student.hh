@@ -3,6 +3,8 @@
 #include <string>
 
 struct StudentRecord {
+    // Constructors.
+    StudentRecord() : number(0), grade(0), name("") {};
     StudentRecord(int number, int grade, std::string name) :
         number(number), grade(grade), name(name) {};
 
