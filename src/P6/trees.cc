@@ -35,6 +35,8 @@
 #include <optional>
 #include <tuple>
 
+#include "student.hh"
+
 void TestHeap();
 void TestBinarySearch();
 void TestInsert();
@@ -127,19 +129,6 @@ class IntBinarySearchTree : public BinarySearchTree<int> {
     int ValueAtIndex_(int index) const;
     std::tuple<int, std::optional<int>>
     ValueAtIndexRecur_(const BinaryTreeNode<int> &node, int index) const;
-};
-
-// Student struct - will be stored in a BST for searching.
-struct StudentRecord {
-    StudentRecord(int number, int grade, std::string name) :
-        number(number), grade(grade), name(name) {};
-
-    int number;
-    int grade;
-    std::string name;
-
-    bool operator<(const StudentRecord &other) const;
-    bool operator>(const StudentRecord &other) const;
 };
 
 // Searchable BST of student records.

@@ -2,7 +2,7 @@
 
 
 CC=g++
-CFLAGS=-Wall -Werror -g -Og --std=c++17
+CFLAGS=-Wall -Werror -g -Og --std=c++17 -Isrc/common
 
 all: bin/P2 bin/P3 bin/P4 bin/P5 bin/P6 bin/P7
 

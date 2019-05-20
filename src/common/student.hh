@@ -11,5 +11,6 @@ struct StudentRecord {
     std::string name;
 
     bool operator<(const StudentRecord &other) const;
+    bool operator>(const StudentRecord &other) const;
 };
 
