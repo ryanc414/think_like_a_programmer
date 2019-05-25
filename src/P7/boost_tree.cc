@@ -20,15 +20,18 @@
 // Allows key-value pairs to be inserted and later retrieved. Does not perform
 // any clever balancing for optimization.
 //
-// Currently hardcodes a mapping of int -> string: TODO add template params to
-// generalise.
+// Types for keys and values can be specified via the template parameters.
 template <class K, class V> class BinarySearchTree {
   public:
-    BinarySearchTree() = default;
+    BinarySearchTree();
     void InsertValue(K key, V value);
     const V *RetrieveValue(K key) const;
+    size_t Size() const;
 
   private:
+    // Define the type of our graph. It is a directed graph. Each vertex
+    // has a key and value as properties and each edge is either a left- or
+    // right- edge from the point of view of its source vertex.
     struct VertexProperties {
         K key;
         V value;
@@ -46,8 +49,24 @@ template <class K, class V> class BinarySearchTree {
                                   VertexProperties,
                                   EdgeProperties> Graph;
     Graph tree_;
+
+    // Store the root vertex for ease of access. This vertex isn't created
+    // until the first value is added so we make it an optional type.
     std::optional<typename Graph::vertex_descriptor> root_;
 
+    // Define property map objects - these are required to retrieve the
+    // properties of vertices and edges.
+    typename boost::property_map<Graph, K VertexProperties::*>::type
+    vertex_key_map_;
+
+    typename boost::property_map<Graph, V VertexProperties::*>::type
+    vertex_value_map_;
+
+    typename boost::property_map<Graph, ChildType EdgeProperties::*>::type
+    edge_type_map_;
+
+    // Recursive implementations for inserting and retrieving values from
+    // the tree.
     void InsertValueRecur_(typename Graph::vertex_descriptor node,
                            const VertexProperties &vp);
     const V *
@@ -59,6 +78,7 @@ int main() {
 
     // Check that retrieving a value from an empty tree returns nullptr.
     assert(test_tree.RetrieveValue(123) == nullptr);
+    assert(test_tree.Size() == 0);
 
     // Insert some values.
     test_tree.InsertValue(482, "Alice");
@@ -66,6 +86,7 @@ int main() {
     test_tree.InsertValue(321, "Charlie");
     test_tree.InsertValue(443, "David");
     test_tree.InsertValue(780, "Emily");
+    assert(test_tree.Size() == 5);
 
     // Check that the values can be retrieved.
     assert(*test_tree.RetrieveValue(482) == "Alice");
@@ -77,13 +98,27 @@ int main() {
     // Check that invalid keys return nullptr
     assert(test_tree.RetrieveValue(999) == nullptr);
 
+    // Try to update an existing key's value. The tree size should be
+    // unchanged.
+    test_tree.InsertValue(321, "Chantelle");
+    assert(test_tree.Size() == 5);
+    assert(*test_tree.RetrieveValue(321) == "Chantelle");
+
     std::cout << "All BinarySearchTree assertions passed." << std::endl;
 
     return 0;
 }
 
-// Inserts a new key-value pair into the graph. This will always create a new
-// vertex: TODO handle duplicate keys by overwriting old vertice?
+// Constructor. Initialise the property getter objects.
+template <class K, class V> BinarySearchTree<K, V>::BinarySearchTree() :
+        tree_(), root_() {
+    edge_type_map_ = boost::get(&EdgeProperties::child_type, tree_);
+    vertex_key_map_ = boost::get(&VertexProperties::key, tree_);
+    vertex_value_map_ = boost::get(&VertexProperties::value, tree_);
+}
+
+// Inserts a new key-value pair into the graph. If the key is already in the
+// graph, updates its value intead of creating a duplicate pair.
 template <class K, class V> void
 BinarySearchTree<K, V>::InsertValue(K key, const V value) {
     VertexProperties vp{key, value};
@@ -105,8 +140,10 @@ BinarySearchTree<K, V>::InsertValueRecur_(
     typename Graph::out_edge_iterator it;
     typename Graph::out_edge_iterator end;
 
-    auto edge_type_map = get(&EdgeProperties::child_type, tree_);
-    auto vertex_key_map = get(&VertexProperties::key, tree_);
+    if (vp.key == vertex_key_map_[node]) {
+        vertex_value_map_[node] = vp.value;
+        return;
+    }
 
     // Iterate through our child nodes to check if we can delegate the insert
     // under one of them.
@@ -115,16 +152,16 @@ BinarySearchTree<K, V>::InsertValueRecur_(
          ++it) {
         auto child_node = boost::target(*it, tree_);
 
-        switch (edge_type_map[*it]) {
+        switch (edge_type_map_[*it]) {
             case ChildType::kLeftChild:
-                if (vp.key <= vertex_key_map[node]) {
+                if (vp.key <= vertex_key_map_[node]) {
                     InsertValueRecur_(child_node, vp);
                     return;
                 }
                 break;
 
             case ChildType::kRightChild:
-                if (vp.key > vertex_key_map[node]) {
+                if (vp.key > vertex_key_map_[node]) {
                     InsertValueRecur_(child_node, vp);
                     return;
                 }
@@ -140,12 +177,12 @@ BinarySearchTree<K, V>::InsertValueRecur_(
     // children.
     assert(boost::out_degree(node, tree_) < 2);
 
-    if (vp.key <= vertex_key_map[node]) {
+    if (vp.key <= vertex_key_map_[node]) {
         // Sanity check that we don't already have a left child.
         for (boost::tie(it, end) = boost::out_edges(node, tree_);
              it != end;
              ++it) {
-            assert(edge_type_map[*it] != ChildType::kLeftChild);
+            assert(edge_type_map_[*it] != ChildType::kLeftChild);
         }
 
         // Insert a new child vertex and edge connecting it to our current
@@ -158,7 +195,7 @@ BinarySearchTree<K, V>::InsertValueRecur_(
         for (boost::tie(it, end) = boost::out_edges(node, tree_);
              it != end;
              ++it) {
-            assert(edge_type_map[*it] != ChildType::kRightChild);
+            assert(edge_type_map_[*it] != ChildType::kRightChild);
         }
 
         // Insert a new child vertex and edge connecting it to our current
@@ -188,12 +225,8 @@ BinarySearchTree<K, V>::RetrieveValueRecur_(
     typename Graph::out_edge_iterator it;
     typename Graph::out_edge_iterator end;
 
-    auto edge_type_map = get(&EdgeProperties::child_type, tree_);
-    auto vertex_key_map = get(&VertexProperties::key, tree_);
-    auto vertex_value_map = get(&VertexProperties::value, tree_);
-
-    if (key == vertex_key_map[node]) {
-        return &vertex_value_map[node];
+    if (key == vertex_key_map_[node]) {
+        return &vertex_value_map_[node];
     }
 
 
@@ -204,15 +237,15 @@ BinarySearchTree<K, V>::RetrieveValueRecur_(
          ++it) {
         auto child_node = boost::target(*it, tree_);
 
-        switch (edge_type_map[*it]) {
+        switch (edge_type_map_[*it]) {
             case ChildType::kLeftChild:
-                if (key <= vertex_key_map[node]) {
+                if (key <= vertex_key_map_[node]) {
                     return RetrieveValueRecur_(child_node, key);
                 }
                 break;
 
             case ChildType::kRightChild:
-                if (key > vertex_key_map[node]) {
+                if (key > vertex_key_map_[node]) {
                     return RetrieveValueRecur_(child_node, key);
                 }
                 break;
@@ -224,5 +257,10 @@ BinarySearchTree<K, V>::RetrieveValueRecur_(
 
     // If we get to here then the node wa not found.
     return nullptr;
+}
+
+// Return the number of vertices in the tree.
+template <class K, class V> size_t BinarySearchTree<K, V>::Size() const {
+    return static_cast<size_t>(boost::num_vertices(tree_));
 }
 
