@@ -172,32 +172,17 @@ BinarySearchTree<K, V>::InsertValueRecur_(
         }
     }
 
-    // If we get to here then we need to create a new child node. Do some
-    // extra checking to ensure we don't ever create two left- or right-
-    // children.
+    // If we get to here then we need to create a new child node on our
+    // current node.
     assert(boost::out_degree(node, tree_) < 2);
 
     if (vp.key <= vertex_key_map_[node]) {
-        // Sanity check that we don't already have a left child.
-        for (boost::tie(it, end) = boost::out_edges(node, tree_);
-             it != end;
-             ++it) {
-            assert(edge_type_map_[*it] != ChildType::kLeftChild);
-        }
-
         // Insert a new child vertex and edge connecting it to our current
         // node.
         auto new_child = boost::add_vertex(vp, tree_);
         EdgeProperties ep{ChildType::kLeftChild};
         boost::add_edge(node, new_child, ep, tree_);
     } else {
-        // Sanity check that we don't already have a right child.
-        for (boost::tie(it, end) = boost::out_edges(node, tree_);
-             it != end;
-             ++it) {
-            assert(edge_type_map_[*it] != ChildType::kRightChild);
-        }
-
         // Insert a new child vertex and edge connecting it to our current
         // node.
         auto new_child = boost::add_vertex(vp, tree_);
