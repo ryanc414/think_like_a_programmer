@@ -22,16 +22,16 @@
 //
 // Currently hardcodes a mapping of int -> string: TODO add template params to
 // generalise.
-class BinarySearchTree {
+template <class K, class V> class BinarySearchTree {
   public:
     BinarySearchTree() = default;
-    void InsertValue(int key, std::string value);
-    const std::string *RetrieveValue(int key) const;
+    void InsertValue(K key, V value);
+    const V *RetrieveValue(K key) const;
 
   private:
     struct VertexProperties {
-        int key;
-        std::string value;
+        K key;
+        V value;
     };
 
     enum class ChildType {kLeftChild, kRightChild};
@@ -46,16 +46,16 @@ class BinarySearchTree {
                                   VertexProperties,
                                   EdgeProperties> Graph;
     Graph tree_;
-    std::optional<Graph::vertex_descriptor> root_;
+    std::optional<typename Graph::vertex_descriptor> root_;
 
-    void InsertValueRecur_(Graph::vertex_descriptor node,
+    void InsertValueRecur_(typename Graph::vertex_descriptor node,
                            const VertexProperties &vp);
-    const std::string *
-    RetrieveValueRecur_(Graph::vertex_descriptor node, int key) const;
+    const V *
+    RetrieveValueRecur_(typename Graph::vertex_descriptor node, K key) const;
 };
 
 int main() {
-    BinarySearchTree test_tree;
+    BinarySearchTree<int, std::string> test_tree;
 
     // Check that retrieving a value from an empty tree returns nullptr.
     assert(test_tree.RetrieveValue(123) == nullptr);
@@ -84,7 +84,8 @@ int main() {
 
 // Inserts a new key-value pair into the graph. This will always create a new
 // vertex: TODO handle duplicate keys by overwriting old vertice?
-void BinarySearchTree::InsertValue(int key, const std::string value) {
+template <class K, class V> void
+BinarySearchTree<K, V>::InsertValue(K key, const V value) {
     VertexProperties vp{key, value};
 
     if (!root_) {
@@ -97,10 +98,12 @@ void BinarySearchTree::InsertValue(int key, const std::string value) {
 // Recursive implementation for inserting a key-value pair into the tree.
 // For each node, compare the key to the one we are inserting and decide
 // whether to insert it under the left- or right- subtree.
-void BinarySearchTree::InsertValueRecur_(Graph::vertex_descriptor node,
-                                         const VertexProperties &vp) {
-    Graph::out_edge_iterator it;
-    Graph::out_edge_iterator end;
+template <class K, class V> void
+BinarySearchTree<K, V>::InsertValueRecur_(
+        typename Graph::vertex_descriptor node,
+        const VertexProperties &vp) {
+    typename Graph::out_edge_iterator it;
+    typename Graph::out_edge_iterator end;
 
     auto edge_type_map = get(&EdgeProperties::child_type, tree_);
     auto vertex_key_map = get(&VertexProperties::key, tree_);
@@ -168,7 +171,8 @@ void BinarySearchTree::InsertValueRecur_(Graph::vertex_descriptor node,
 
 // Retreives a value for a given key. If the key does not exist, returns
 // nullptr.
-const std::string *BinarySearchTree::RetrieveValue(int key) const {
+template <class K, class V> const V *
+BinarySearchTree<K, V>::RetrieveValue(K key) const {
     if (!root_) {
         return nullptr;
     }
@@ -176,11 +180,13 @@ const std::string *BinarySearchTree::RetrieveValue(int key) const {
     return RetrieveValueRecur_(*root_, key);
 }
 
-
-const std::string *BinarySearchTree::RetrieveValueRecur_(
-    Graph::vertex_descriptor node, int key) const {
-    Graph::out_edge_iterator it;
-    Graph::out_edge_iterator end;
+// Recursive implementation for retrieving a value from the tree corresponding
+// to a given key.
+template <class K, class V> const V *
+BinarySearchTree<K, V>::RetrieveValueRecur_(
+       typename Graph::vertex_descriptor node, K key) const {
+    typename Graph::out_edge_iterator it;
+    typename Graph::out_edge_iterator end;
 
     auto edge_type_map = get(&EdgeProperties::child_type, tree_);
     auto vertex_key_map = get(&VertexProperties::key, tree_);
