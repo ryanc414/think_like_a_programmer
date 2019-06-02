@@ -22,7 +22,8 @@ bin/P6: bin/P6/sum_positives bin/P6/binary_parity bin/P6/count_targets \
 bin/P7: bin/P7/student_collection bin/P7/student_array_search \
         bin/P7/augmented_student bin/P7/boost_tree
 
-bin/P8: bin/P8/cheating_hangman bin/P8/hangman_ut bin/P8/test_hangman
+bin/P8: bin/P8/cheating_hangman bin/P8/hangman_ut bin/P8/test_hangman \
+		bin/P8/hangman_guesser
 
 clean:
 	rm -rf bin/P*/*
@@ -53,4 +54,7 @@ bin/P8/hangman_ut: src/P8/hangman_ut.cc src/P8/hangman.hh src/P8/hangman_impl.cc
 
 bin/P8/test_hangman: src/P8/test_hangman.py
 	cp $< $@
+
+bin/P8/hangman_guesser: src/P8/hangman_guesser.cc src/P8/hangman.hh src/P8/hangman_impl.cc
+	$(CC) $(CFLAGS) src/P8/hangman_guesser.cc src/P8/hangman_impl.cc -o $@
 

@@ -1,5 +1,9 @@
 /* hangman_impl.cc: implementation of cheating hangman core logic. */
 
+#include <chrono>
+#include <optional>
+#include <thread>
+
 #include "hangman.hh"
 
 // Read the words file and organise words by their length.
@@ -271,5 +275,152 @@ std::string LetterPattern::Reveal(std::string already_revealed) {
     }
 
     return already_revealed;
+}
+
+// Prompt for a word to be entered, then attempt to guess it within the
+// specified number of misses.
+void GuessWord(const std::map<size_t, std::list<std::string>> &all_words,
+               size_t max_misses) {
+    std::string chosen_word = PromptForWord(all_words);
+    std::list<std::string> possible_words = all_words.at(chosen_word.length());
+
+    size_t misses = 0;
+    size_t discovered_letter_count = 0;
+    std::string revealed_word(chosen_word.length(), kPlaceHolder);
+    std::array<bool, kNumLetters> guessed_letters;
+    guessed_letters.fill(false);
+
+    while ((discovered_letter_count < chosen_word.length()) &&
+           (misses < max_misses)) {
+        std::cout << "Discovered word: " << revealed_word << std::endl;
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+        char next_letter = GuessNextLetter(possible_words, guessed_letters);
+        std::cout << "Guessing letter: " << next_letter << std::endl;
+        assert(!guessed_letters[next_letter - 'a']);
+        guessed_letters[next_letter - 'a'] = true;
+
+        std::optional<LetterPattern> match =
+            CheckGuess(next_letter, chosen_word);
+
+        if (match) {
+            std::cout << "Guess was correct!" << std::endl;
+            discovered_letter_count += match->size();
+            revealed_word = match->Reveal(revealed_word);
+            possible_words = WordsMatchingPattern(possible_words, *match);
+
+        } else {
+            std::cout << "Incorrect guess." << std::endl;
+            ++misses;
+            possible_words = std::get<0>(
+                SplitWordsByLetter(possible_words, next_letter));
+        }
+
+        std::cout << std::endl;
+    }
+
+    if (discovered_letter_count == chosen_word.length()) {
+        std::cout << "I guessed your word was " << chosen_word << std::endl;
+    } else {
+        std::cout << "I couldn't guess your word - only got "
+                  << revealed_word
+                  << std::endl;
+    }
+
+}
+
+// Prompt for a word to be entered. It must be a word we know about.
+std::string
+PromptForWord(const std::map<size_t, std::list<std::string>> &possible_words) {
+    std::string word;
+    std::cout << "Enter a word for me to guess: " << std::endl << "> ";
+
+    if (!std::getline(std::cin, word)) {
+        abort();
+    }
+
+    while (!ValidWord(word, possible_words)) {
+        std::cout << "I don't know that word, try another."
+                  << std::endl
+                  << "> ";
+        if (!std::getline(std::cin, word)) {
+            abort();
+        }
+    }
+
+    return word;
+}
+
+// Check if a word entered is valid.
+bool
+ValidWord(std::string chosen_word,
+          const std::map<size_t, std::list<std::string>> &possible_words) {
+    try {
+        for (const std::string &word : possible_words.at(chosen_word.length())) {
+            if (word == chosen_word) {
+                return true;
+            }
+        }
+    } catch (std::out_of_range) {
+        return false;
+    }
+
+    return false;
+}
+
+// Guess the next letter from the choice of possible words, not repeating any
+// letters already guessed.
+char GuessNextLetter(const std::list<std::string> &possible_words,
+                     std::array<bool, kNumLetters> guessed_letters) {
+    std::array<size_t, kNumLetters> letters_freq;
+    letters_freq.fill(0);
+
+    for (const std::string &word : possible_words) {
+        for (char c : word) {
+            ++letters_freq[c - 'a'];
+        }
+    }
+
+    char most_freq_letter = '\0';
+    size_t most_freq_letter_count = 0;
+
+    for (char letter = 'a'; letter <= 'z'; ++letter) {
+        size_t count = letters_freq[letter - 'a'];
+        if ((count > most_freq_letter_count) &&
+            (!guessed_letters[letter - 'a'])) {
+            most_freq_letter = letter;
+            most_freq_letter_count = count;
+        }
+    }
+
+    return most_freq_letter;
+}
+
+// Check if a guessed letter is within a word - if so return the pattern.
+std::optional<LetterPattern>
+CheckGuess(char next_letter, const std::string &chosen_word) {
+    LetterPattern pattern(chosen_word, next_letter);
+
+    if (pattern.size() > 0) {
+        return pattern;
+    } else {
+        return std::nullopt;
+    }
+}
+
+// Return all words in the input list that match the given letter pattern.
+std::list<std::string>
+WordsMatchingPattern(const std::list<std::string> &words,
+                     const LetterPattern &pattern) {
+    std::list<std::string> matching_words;
+
+    for (const std::string &word : words) {
+        if (pattern.Matches(word)) {
+            matching_words.push_back(word);
+        }
+    }
+
+    return matching_words;
 }
 

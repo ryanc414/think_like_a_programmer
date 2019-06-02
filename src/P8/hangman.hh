@@ -66,5 +66,24 @@ MostFrequentPattern(std::list<std::string> words, char letter);
 
 template <class T> T RandomChoice(std::list<T> in);
 
+void GuessWord(const std::map<size_t, std::list<std::string>> &possible_words,
+               size_t max_misses);
+
+std::string
+PromptForWord(const std::map<size_t, std::list<std::string>> &possible_words);
+
+bool ValidWord(std::string word,
+               const std::map<size_t, std::list<std::string>> &possible_words);
+
+char GuessNextLetter(const std::list<std::string> &possible_words,
+                     std::array<bool, kNumLetters> guessed_letters);
+
+std::optional<LetterPattern>
+CheckGuess(char next_letter, const std::string &chosen_word);
+
+std::list<std::string>
+WordsMatchingPattern(const std::list<std::string> &words,
+                     const LetterPattern &pattern);
+
 #endif  // HANGMAN_H_
 
