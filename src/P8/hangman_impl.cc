@@ -273,7 +273,3 @@ std::string LetterPattern::Reveal(std::string already_revealed) {
     return already_revealed;
 }
 
-std::vector<bool> LetterPattern::pattern() const {
-    return pattern_;
-}
-

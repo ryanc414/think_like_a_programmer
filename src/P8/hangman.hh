@@ -40,9 +40,6 @@ class LetterPattern {
     bool Matches(const std::string &word) const;
     std::string Reveal(std::string already_revealed);
 
-    // Debug only
-    std::vector<bool> pattern() const;
-
   private:
     char letter_;
     size_t size_;
