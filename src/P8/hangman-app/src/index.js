@@ -17,6 +17,9 @@ import hangman11 from './hangman11.png'
 import hangman12 from './hangman12.png'
 import hangman13 from './hangman13.png'
 
+var allWords = require('./words_dictionary.json');
+console.log(allWords);
+
 const hangman_images = [
   hangman0,
   hangman1,
@@ -48,29 +51,34 @@ class Game extends React.PureComponent {
 
     for (let i = 0; i < 26; i++) {
       const letter = String.fromCharCode(aCode + i);
-      guessedLetters[letter] = false;
+      guessedLetters.set(letter, false);
     }
 
-    return {misses: 0, guessedLetters: guessedLetters};
+    const revealedWord = Array(this.props.wordLength).fill(
+      this.props.placeHolder);
+
+    return {
+      misses: 0,
+      guessedLetters: guessedLetters,
+      revealedWord: revealedWord,
+    };
   }
 
   incrementMisses() {
     const curr_misses = this.state.misses;
-    const guessedLetters = this.state.guessedLetters
     this.setState({
-      misses: curr_misses + 1,
-      guessedLetters: guessedLetters
+      ...this.state,
+      misses: curr_misses + 1
     });
   }
 
   handleLetter(letter) {
-    if (this.state.guessedLetters[letter]) {
+    if (this.state.guessedLetters.get(letter)) {
       alert("You've already guessed letter " + letter);
     } else {
       let guessedLetters = new Map(this.state.guessedLetters);
-      guessedLetters[letter] = true;
-      const misses = this.state.misses;
-      this.setState({misses: misses,  guessedLetters: guessedLetters});
+      guessedLetters.set(letter, true);
+      this.setState({...this.state, guessedLetters: guessedLetters});
     }
   }
 
@@ -105,9 +113,11 @@ function Hangman(props) {
   );
 }
 
-// TODO... display guessed letters
+// Display guessed letters
 function Letters(props) {
-  let guessedLetters = [];
+  let guessedLetters = [...props.guessedLetters.keys()].filter((key) => {
+    return props.guessedLetters.get(key);
+  });
 
   return (
     <div className="guessed-letters">
@@ -117,7 +127,7 @@ function Letters(props) {
   );
 }
 
-// TODO... display the revealed word
+// Display the revealed word
 function RevealedWord(props) {
   const revealedWord = props.revealedWord.join(" ");
   return (
@@ -128,7 +138,7 @@ function RevealedWord(props) {
   );
 }
 
-// TODO... Box for user input
+// Box for user input
 class InputBox extends React.Component {
   constructor(props) {
     super(props);
@@ -174,7 +184,7 @@ class InputBox extends React.Component {
 // ========================================
 
 ReactDOM.render(
-  <Game />,
+  <Game wordLength={5} placeHolder='_' />,
   document.getElementById('root')
 );
 
