@@ -38,32 +38,37 @@ const hangman_images = [
 class Game extends React.PureComponent {
   constructor(props) {
     super(props)
-    this.state = {
-      misses: 0,
-      guessedLetters: Array(26),
-    };
-    this.state.guessedLetters.fill(false);
+    this.state = this.initialState();
     this.handleLetter = this.handleLetter.bind(this);
   }
 
-  incrementMisses() {
-     const curr_misses = this.state.misses;
-     this.setState({misses: curr_misses + 1});
+  initialState() {
+    let guessedLetters = new Map();
+    const aCode = "a".charCodeAt(0);
+
+    for (let i = 0; i < 26; i++) {
+      const letter = String.fromCharCode(aCode + i);
+      guessedLetters[letter] = false;
+    }
+
+    return {misses: 0, guessedLetters: guessedLetters};
   }
 
-  reset() {
-    this.setState({misses: 0, guessedLetters: Array(26)});
+  incrementMisses() {
+    const curr_misses = this.state.misses;
+    const guessedLetters = this.state.guessedLetters
+    this.setState({
+      misses: curr_misses + 1,
+      guessedLetters: guessedLetters
+    });
   }
 
   handleLetter(letter) {
-    const letterCode = letter.charCodeAt(0);
-    const aCode = "a".charCodeAt(0);
-
-    if (this.state.guessedLetters[letterCode - aCode]) {
+    if (this.state.guessedLetters[letter]) {
       alert("You've already guessed letter " + letter);
     } else {
-      let guessedLetters = this.state.guessedLetters.slice();
-      guessedLetters[letterCode - aCode] = true;
+      let guessedLetters = new Map(this.state.guessedLetters);
+      guessedLetters[letter] = true;
       const misses = this.state.misses;
       this.setState({misses: misses,  guessedLetters: guessedLetters});
     }
@@ -102,7 +107,7 @@ function Hangman(props) {
 
 // TODO... display guessed letters
 function Letters(props) {
-  const guessedLetters = props.guessedLetters.join(", ");
+  let guessedLetters = [];
 
   return (
     <div className="guessed-letters">
