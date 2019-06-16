@@ -38,7 +38,12 @@ const hangman_images = [
 class Game extends React.PureComponent {
   constructor(props) {
     super(props)
-    this.state = {misses: 0};
+    this.state = {
+      misses: 0,
+      guessedLetters: Array(26),
+    };
+    this.state.guessedLetters.fill(false);
+    this.handleLetter = this.handleLetter.bind(this);
   }
 
   incrementMisses() {
@@ -47,7 +52,21 @@ class Game extends React.PureComponent {
   }
 
   reset() {
-    this.setState({misses: 0})
+    this.setState({misses: 0, guessedLetters: Array(26)});
+  }
+
+  handleLetter(letter) {
+    const letterCode = letter.charCodeAt(0);
+    const aCode = "a".charCodeAt(0);
+
+    if (this.state.guessedLetters[letterCode - aCode]) {
+      alert("You've already guessed letter " + letter);
+    } else {
+      let guessedLetters = this.state.guessedLetters.slice();
+      guessedLetters[letterCode - aCode] = true;
+      const misses = this.state.misses;
+      this.setState({misses: misses,  guessedLetters: guessedLetters});
+    }
   }
 
   render() {
@@ -55,21 +74,16 @@ class Game extends React.PureComponent {
       <div className="game">
         <div className="game-info">
           <Hangman misses={this.state.misses} />
-          <Letters guessedLetters={['a', 'v', 'z']} />
+          <div className="word-status">
+            <Letters guessedLetters={this.state.guessedLetters} />
+            <RevealedWord revealedWord={['_', '_', '_', '_', '_']} />
+          </div>
         </div>
-        <RevealedWord revealedWord={['_', '_', '_', '_', '_']} />
-        <InputBox />
+        <InputBox handleLetter={this.handleLetter}/>
       </div>
     );
   }
 }
-
-// ========================================
-
-ReactDOM.render(
-  <Game />,
-  document.getElementById('root')
-);
 
 // Selects and renders a hangman image depending on the number of misses.
 function Hangman(props) {
@@ -101,19 +115,61 @@ function Letters(props) {
 // TODO... display the revealed word
 function RevealedWord(props) {
   const revealedWord = props.revealedWord.join(" ");
-  return <p>Word: {revealedWord}</p>;
+  return (
+    <div className="revealed-word">
+      <p>Word:</p>
+      <p>{revealedWord}</p>
+    </div>
+  );
 }
 
 // TODO... Box for user input
-function InputBox(props) {
-  return (
-    <form>
-      <label>
-        Next letter:
-        <input type="text" name="next-letter" />
-      </label>
-      <input type="submit" name="Submit" />
-    </form>
-  );
+class InputBox extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {value: ''};
+    this.handleChange = this.handleChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+  }
+
+  handleChange(event) {
+    this.setState({value: event.target.value});
+  }
+
+  handleSubmit(event) {
+    event.preventDefault();
+    if (!this.validValue(this.state.value)) {
+      alert('Invalid guess: enter a single lowercase letter');
+    } else {
+      this.props.handleLetter(this.state.value);
+    }
+  }
+
+  validValue(val) {
+    return (val.length === 1) && (val >= 'a') && (val <= 'z');
+  }
+
+  render() {
+    return (
+      <form onSubmit={this.handleSubmit}>
+        <div className="input-box">
+          <label>
+            Next letter:
+            <input type="text"
+                   value={this.state.value}
+                   onChange={this.handleChange} />
+          </label>
+          <button>Guess letter</button>
+        </div>
+      </form>
+    );
+  }
 }
+
+// ========================================
+
+ReactDOM.render(
+  <Game />,
+  document.getElementById('root')
+);
 

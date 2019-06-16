@@ -8,3 +8,13 @@ body {
   flex-direction: row;
 }
 
+.word-status {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-box {
+  display: flex;
+  flex-direction: row;
+}
+
