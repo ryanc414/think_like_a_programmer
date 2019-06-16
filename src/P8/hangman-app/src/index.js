@@ -34,21 +34,6 @@ const hangman_images = [
   hangman13,
 ]
 
-// Selects and renders a hangman image depending on the number of misses.
-function Hangman(props) {
-  const img_src = hangman_images[props.misses]
-  return (
-    <img
-      src={img_src}
-      alt={
-        "A poor stick man in stage "
-        + props.misses
-        + " of being hanged :("
-      }
-    />
-  );
-}
-
 // Top-level game component.
 class Game extends React.PureComponent {
   constructor(props) {
@@ -66,33 +51,14 @@ class Game extends React.PureComponent {
   }
 
   render() {
-    let info;
-    if (this.state.misses > 12) {
-      info = (
-        <div>
-          <p>Stick man is dead</p>
-          <button onClick={() => this.reset()}>reset</button>
-        </div>
-      );
-    } else {
-      info = (
-        <div>
-          <p>You have made {this.state.misses} misses.</p>
-          <button onClick={() => this.incrementMisses()}>
-            Miss
-          </button>
-        </div>
-      );
-    }
-
     return (
       <div className="game">
-        <div className="hangman">
-          <Hangman misses={this.state.misses} />
-        </div>
         <div className="game-info">
-          {info}
+          <Hangman misses={this.state.misses} />
+          <Letters guessedLetters={['a', 'v', 'z']} />
         </div>
+        <RevealedWord revealedWord={['_', '_', '_', '_', '_']} />
+        <InputBox />
       </div>
     );
   }
@@ -104,4 +70,50 @@ ReactDOM.render(
   <Game />,
   document.getElementById('root')
 );
+
+// Selects and renders a hangman image depending on the number of misses.
+function Hangman(props) {
+  const img_src = hangman_images[props.misses]
+  return (
+    <img
+      src={img_src}
+      alt={
+        "A poor stick man in stage "
+        + props.misses
+        + " of being hanged :("
+      }
+    />
+  );
+}
+
+// TODO... display guessed letters
+function Letters(props) {
+  const guessedLetters = props.guessedLetters.join(", ");
+
+  return (
+    <div className="guessed-letters">
+      <p>Guessed letters:</p>
+      <p>{guessedLetters}</p>
+    </div>
+  );
+}
+
+// TODO... display the revealed word
+function RevealedWord(props) {
+  const revealedWord = props.revealedWord.join(" ");
+  return <p>Word: {revealedWord}</p>;
+}
+
+// TODO... Box for user input
+function InputBox(props) {
+  return (
+    <form>
+      <label>
+        Next letter:
+        <input type="text" name="next-letter" />
+      </label>
+      <input type="submit" name="Submit" />
+    </form>
+  );
+}
 

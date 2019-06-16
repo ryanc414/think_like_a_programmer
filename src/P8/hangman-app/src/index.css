@@ -3,20 +3,8 @@ body {
   margin: 20px;
 }
 
-ol, ul {
-  padding-left: 30px;
-}
-
-.status {
-  margin-bottom: 10px;
-}
-
-.game {
+.game-info {
   display: flex;
   flex-direction: row;
-}
-
-.game-info {
-  margin-left: 20px;
 }
 
