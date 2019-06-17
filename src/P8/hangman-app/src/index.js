@@ -17,8 +17,8 @@ import hangman11 from './hangman11.png'
 import hangman12 from './hangman12.png'
 import hangman13 from './hangman13.png'
 
-var allWords = require('./words_dictionary.json');
-console.log(allWords);
+import allWords from './words_dictionary.json';
+console.log(Object.keys(allWords));
 
 const hangman_images = [
   hangman0,
