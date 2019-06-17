@@ -18,7 +18,6 @@ import hangman12 from './hangman12.png'
 import hangman13 from './hangman13.png'
 
 import allWords from './words_dictionary.json';
-console.log(Object.keys(allWords));
 
 const hangman_images = [
   hangman0,
@@ -45,6 +44,7 @@ class Game extends React.PureComponent {
     this.handleLetter = this.handleLetter.bind(this);
   }
 
+  // Construct initial state, also used for reset.
   initialState() {
     let guessedLetters = new Map();
     const aCode = "a".charCodeAt(0);
@@ -57,13 +57,23 @@ class Game extends React.PureComponent {
     const revealedWord = Array(this.props.wordLength).fill(
       this.props.placeHolder);
 
+    const words = this.wordsOfLength(5);
+
     return {
       misses: 0,
+      discoveredLetterCount: 0,
       guessedLetters: guessedLetters,
       revealedWord: revealedWord,
+      words: words,
     };
   }
 
+  // Filter words by length.
+  wordsOfLength(n) {
+    return Object.keys(allWords).filter((word) => word.length === n);
+  }
+
+  // Increment the number of misses.
   incrementMisses() {
     const curr_misses = this.state.misses;
     this.setState({
@@ -72,16 +82,101 @@ class Game extends React.PureComponent {
     });
   }
 
+  // Handle a guessed letter.
   handleLetter(letter) {
     if (this.state.guessedLetters.get(letter)) {
       alert("You've already guessed letter " + letter);
+      return;
+    }
+
+    let guessedLetters = new Map(this.state.guessedLetters);
+    guessedLetters.set(letter, true);
+    this.setState({...this.state, guessedLetters: guessedLetters});
+
+    const splitWords = this.splitWordsByLetter(letter);
+    const patternWords = this.mostFrequentPattern(
+      splitWords.wordsWithLetter, letter);
+
+    if (splitWords.wordsWithoutLetter.length >
+        patternWords.matchingPatternWords.length) {
+      const misses = this.state.misses + 1;
+      this.setState({
+        ...this.state,
+        misses: misses,
+        words: splitWords.wordsWithoutLetter,
+      });
     } else {
-      let guessedLetters = new Map(this.state.guessedLetters);
-      guessedLetters.set(letter, true);
-      this.setState({...this.state, guessedLetters: guessedLetters});
+      const revealedWord = patternWords.pattern.reveal(
+        this.state.revealedWord);
+      const discoveredLetterCount = this.state.discoveredLetterCount + 1;
+      this.setState({
+        ...this.state,
+        discoveredLetterCount: discoveredLetterCount,
+        revealedWord: revealedWord,
+        words: patternWords.matchingPatternWords,
+      });
     }
   }
 
+  // Split our current words list into two, one with and one without a certain
+  // letter.
+  splitWordsByLetter(letter) {
+    let wordsWithoutLetter = [];
+    let wordsWithLetter = [];
+
+    this.state.words.forEach((word) => {
+      if (word.indexOf(letter) === -1) {
+        wordsWithoutLetter.push(word);
+      } else {
+        wordsWithLetter.push(word);
+      }
+    });
+
+    return {
+      wordsWithoutLetter: wordsWithoutLetter,
+      wordsWithLetter: wordsWithLetter,
+    }
+  }
+
+  // Find the letter pattern that matches the most words.
+  mostFrequentPattern(wordsWithLetter, letter) {
+    let mostFrequentPattern;
+    let mostFrequentMatchingWords = [];
+
+    // Algorithm for finding the most frequent pattern:
+    //
+    // 1. Pop the first word off
+    // 2. Find all other words that match that pattern.
+    // 3. Remove matching words
+    // 4. Update the running count of most frequent pattern.
+    // 5. Repeat until all words are exhausted.
+    while (wordsWithLetter.length > 0) {
+      const word = wordsWithLetter.shift();
+      const pattern = new LetterPattern(word);
+      let matchingWords = [word];
+
+      for (let i = 0; i < wordsWithLetter.length; ) {
+        if (pattern.matches(wordsWithLetter[i])) {
+          matchingWords.append(wordsWithLetter[i]);
+          wordsWithLetter[i] = wordsWithLetter.pop();
+        } else {
+          i++;
+        }
+      }
+
+      if (matchingWords.length > mostFrequentMatchingWords.length) {
+        mostFrequentMatchingWords = matchingWords;
+        mostFrequentPattern = pattern;
+      }
+    }
+
+    return {
+      mostFrequentPattern: mostFrequentPattern,
+      mostFrequentMatchingWords: mostFrequentMatchingWords,
+    };
+  }
+
+  // Main render function.
   render() {
     return (
       <div className="game">
@@ -89,7 +184,7 @@ class Game extends React.PureComponent {
           <Hangman misses={this.state.misses} />
           <div className="word-status">
             <Letters guessedLetters={this.state.guessedLetters} />
-            <RevealedWord revealedWord={['_', '_', '_', '_', '_']} />
+            <RevealedWord revealedWord={this.state.revealedWord} />
           </div>
         </div>
         <InputBox handleLetter={this.handleLetter}/>
