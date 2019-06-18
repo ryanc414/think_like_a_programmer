@@ -91,31 +91,47 @@ class Game extends React.PureComponent {
 
     let guessedLetters = new Map(this.state.guessedLetters);
     guessedLetters.set(letter, true);
-    this.setState({...this.state, guessedLetters: guessedLetters});
+    console.log('guessedLetters:');
+    console.log(guessedLetters);
 
     const splitWords = this.splitWordsByLetter(letter);
+    console.log('splitWords:');
+    console.log(splitWords);
     const patternWords = this.mostFrequentPattern(
       splitWords.wordsWithLetter, letter);
+    console.log('patternWords:');
+    console.log(patternWords);
+
+    let revealedWord;
+    let misses;
+    let discoveredLetterCount;
+    let words;
+
 
     if (splitWords.wordsWithoutLetter.length >
-        patternWords.matchingPatternWords.length) {
-      const misses = this.state.misses + 1;
-      this.setState({
-        ...this.state,
-        misses: misses,
-        words: splitWords.wordsWithoutLetter,
-      });
+        patternWords.mostFrequentMatchingWords.length) {
+      console.log('Bad guess');
+      revealedWord = this.state.revealedWord;
+      misses = this.state.misses + 1;
+      discoveredLetterCount = this.state.discoveredLetterCount;
+      words = splitWords.wordsWithoutLetter;
     } else {
-      const revealedWord = patternWords.pattern.reveal(
+      console.log('Good guess!');
+      revealedWord = patternWords.mostFrequentPattern.reveal(
         this.state.revealedWord);
-      const discoveredLetterCount = this.state.discoveredLetterCount + 1;
-      this.setState({
-        ...this.state,
-        discoveredLetterCount: discoveredLetterCount,
-        revealedWord: revealedWord,
-        words: patternWords.matchingPatternWords,
-      });
+      misses = this.state.misses;
+      discoveredLetterCount = this.state.discoveredLetterCount + 1;
+      words = patternWords.mostFrequentMatchingWords;
     }
+
+    this.setState({
+      misses: misses,
+      discoveredLetterCount: discoveredLetterCount,
+      guessedLetters: guessedLetters,
+      revealedWord: revealedWord,
+      words: words,
+    });
+
   }
 
   // Split our current words list into two, one with and one without a certain
@@ -152,13 +168,18 @@ class Game extends React.PureComponent {
     // 5. Repeat until all words are exhausted.
     while (wordsWithLetter.length > 0) {
       const word = wordsWithLetter.shift();
-      const pattern = new LetterPattern(word);
+      const pattern = new LetterPattern(word, letter);
+      if (pattern.size === 0) {
+        throw new Error("Pattern did not match");
+      }
+
       let matchingWords = [word];
 
       for (let i = 0; i < wordsWithLetter.length; ) {
         if (pattern.matches(wordsWithLetter[i])) {
-          matchingWords.append(wordsWithLetter[i]);
-          wordsWithLetter[i] = wordsWithLetter.pop();
+          matchingWords.push(wordsWithLetter[i]);
+          wordsWithLetter[i] = wordsWithLetter[wordsWithLetter.length - 1];
+          wordsWithLetter.pop();
         } else {
           i++;
         }
@@ -273,6 +294,65 @@ class InputBox extends React.Component {
         </div>
       </form>
     );
+  }
+}
+
+// Represents a pattern of a letter matching a word.
+class LetterPattern {
+
+  // Construct a pattern for a particular letter in a word.
+  constructor(word, letter) {
+    this.letter = letter;
+    let size = 0;
+    let pattern = Array(word.length);
+
+    for (let i = 0; i < word.length; i++) {
+      if (word[i] === letter) {
+        pattern[i] = true;
+        size++
+      } else {
+        pattern[i] = false;
+      }
+    }
+
+    this.size = size;
+    this.pattern = pattern;
+  }
+
+  // Check if a word matches this pattern.
+  matches(word) {
+    if (word.length !== this.pattern.length) {
+      throw new Error("Word length does not match pattern");
+    }
+
+    for (let i = 0; i < word.length; i++) {
+      if (this.pattern[i] && (word[i] !== this.letter)) {
+        return false;
+      } else if (!this.pattern[i] && (word[i] === this.letter)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  // Reveals letters in this pattern in the word.
+  reveal(revealedSoFar) {
+    if (revealedSoFar.length !== this.pattern.length) {
+      throw new Error("Word length does not match pattern");
+    }
+
+    let newRevealed = Array(revealedSoFar.length);
+
+    for (let i = 0; i < revealedSoFar.length; i++) {
+      if (this.pattern[i]) {
+        newRevealed[i] = this.letter;
+      } else {
+        newRevealed[i] = revealedSoFar[i];
+      }
+    }
+
+    return newRevealed;
   }
 }
 
