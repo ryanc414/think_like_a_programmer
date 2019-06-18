@@ -57,7 +57,7 @@ class Game extends React.PureComponent {
     const revealedWord = Array(this.props.wordLength).fill(
       this.props.placeHolder);
 
-    const words = this.wordsOfLength(5);
+    const words = this.wordsOfLength(this.props.wordLength);
 
     return {
       misses: 0,
@@ -71,15 +71,6 @@ class Game extends React.PureComponent {
   // Filter words by length.
   wordsOfLength(n) {
     return Object.keys(allWords).filter((word) => word.length === n);
-  }
-
-  // Increment the number of misses.
-  incrementMisses() {
-    const curr_misses = this.state.misses;
-    this.setState({
-      ...this.state,
-      misses: curr_misses + 1
-    });
   }
 
   // Handle a guessed letter.
@@ -107,7 +98,6 @@ class Game extends React.PureComponent {
     let discoveredLetterCount;
     let words;
 
-
     if (splitWords.wordsWithoutLetter.length >
         patternWords.mostFrequentMatchingWords.length) {
       console.log('Bad guess');
@@ -120,18 +110,29 @@ class Game extends React.PureComponent {
       revealedWord = patternWords.mostFrequentPattern.reveal(
         this.state.revealedWord);
       misses = this.state.misses;
-      discoveredLetterCount = this.state.discoveredLetterCount + 1;
+      discoveredLetterCount = (
+        this.state.discoveredLetterCount
+        + patternWords.mostFrequentPattern.size
+      );
       words = patternWords.mostFrequentMatchingWords;
     }
 
-    this.setState({
-      misses: misses,
-      discoveredLetterCount: discoveredLetterCount,
-      guessedLetters: guessedLetters,
-      revealedWord: revealedWord,
-      words: words,
-    });
-
+    if (misses === this.props.maxMisses) {
+      alert('Too many misses. I was thinking of: ' + this.randomWord());
+      this.setState(this.initialState());
+    } else if (discoveredLetterCount === this.props.wordLength) {
+      alert('You won! I was thinking of: '
+            + revealedWord.join(''));
+      this.setState(this.initialState());
+    } else {
+      this.setState({
+        misses: misses,
+        discoveredLetterCount: discoveredLetterCount,
+        guessedLetters: guessedLetters,
+        revealedWord: revealedWord,
+        words: words,
+      });
+    }
   }
 
   // Split our current words list into two, one with and one without a certain
@@ -197,6 +198,13 @@ class Game extends React.PureComponent {
     };
   }
 
+  // Select a word at random from our list of possibles.
+  randomWord() {
+    return this.state.words[
+      Math.floor(Math.random() * this.state.words.length)
+    ];
+  }
+
   // Main render function.
   render() {
     return (
@@ -233,7 +241,7 @@ function Hangman(props) {
 function Letters(props) {
   let guessedLetters = [...props.guessedLetters.keys()].filter((key) => {
     return props.guessedLetters.get(key);
-  });
+  }).join(', ');
 
   return (
     <div className="guessed-letters">
@@ -273,6 +281,7 @@ class InputBox extends React.Component {
       alert('Invalid guess: enter a single lowercase letter');
     } else {
       this.props.handleLetter(this.state.value);
+      this.setState({value: ''});
     }
   }
 
@@ -359,7 +368,7 @@ class LetterPattern {
 // ========================================
 
 ReactDOM.render(
-  <Game wordLength={5} placeHolder='_' />,
+  <Game wordLength={8} placeHolder='_' maxMisses={13} />,
   document.getElementById('root')
 );
 
