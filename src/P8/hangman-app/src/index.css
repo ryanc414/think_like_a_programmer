@@ -3,6 +3,11 @@ body {
   margin: 20px;
 }
 
+.game {
+	display: flex;
+	flex-direction: column;
+}
+
 .game-info {
   display: flex;
   flex-direction: row;
@@ -16,5 +21,49 @@ body {
 .input-box {
   display: flex;
   flex-direction: row;
+}
+
+.key {
+	background: #fff;
+	border: 1px solid #999;
+	float: left;
+	font-size: 24px;
+	font-weight: bold;
+	line-height: 34px;
+	height: 34px;
+	margin-right: -1px;
+	margin-top: -1px;
+	padding: 0;
+	text-align: center;
+	width: 34px;
+}
+
+.key:focus {
+	outline: none;
+}
+
+.key-guessed {
+	background: #555;
+	border: 1px solid #999;
+	float: left;
+	font-size: 24px;
+	font-weight: bold;
+	line-height: 34px;
+	height: 34px;
+	margin-right: -1px;
+	margin-top: -1px;
+	padding: 0;
+	text-align: center;
+	width: 34px;
+}
+
+.key-guessed:focus {
+	outline: none;
+}
+
+.keyboard-row:after {
+	clear: both;
+	content: "";
+	display: table;
 }
 
