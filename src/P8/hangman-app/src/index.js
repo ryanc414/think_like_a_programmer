@@ -51,7 +51,7 @@ class MetaGame extends React.Component {
   handleRetry() {
     this.setState({wordLength: null});
   }
-  
+
   render() {
     if (!this.state.wordLength) {
       return <StartSelector playGame={this.playGame} />;
@@ -111,7 +111,7 @@ class StartSelector extends React.Component {
       </div>
     );
   }
-}      
+}
 
 // Top-level game component.
 class Game extends React.PureComponent {
@@ -121,6 +121,10 @@ class Game extends React.PureComponent {
     this.handleLetter = this.handleLetter.bind(this);
     this.onKeyUp = this.onKeyUp.bind(this);
     this.handleRetry = this.handleRetry.bind(this);
+  }
+
+  componentDidMount() {
+    this.refs.gamediv.focus();
   }
 
   // Construct initial state, also used for reset.
@@ -166,6 +170,10 @@ class Game extends React.PureComponent {
       throw new Error("Already guessed letter: " + letter);
     }
 
+    if (this.state.finishMessage) {
+      return;
+    }
+
     let guessedLetters = new Map(this.state.guessedLetters);
     guessedLetters.set(letter, true);
     console.log("guessedLetters:");
@@ -206,7 +214,7 @@ class Game extends React.PureComponent {
     let finishMessage = null;
     if (misses === this.props.maxMisses) {
       finishMessage = (
-        "Too many misses. I was thinking of: " + this.randomWord());
+        "Too many misses. I was thinking of: " + this.randomWord(words));
     } else if (discoveredLetterCount === this.props.wordLength) {
       finishMessage = "You won! I was thinking of: " + revealedWord.join("");
     }
@@ -285,10 +293,8 @@ class Game extends React.PureComponent {
   }
 
   // Select a word at random from our list of possibles.
-  randomWord() {
-    return this.state.words[
-      Math.floor(Math.random() * this.state.words.length)
-    ];
+  randomWord(words) {
+    return words[Math.floor(Math.random() * this.state.words.length)];
   }
 
   // Handle a key press. If any letter key is pressed we take it as the next input.
@@ -320,7 +326,7 @@ class Game extends React.PureComponent {
   // Main render function.
   render() {
     return (
-      <div className="game" onKeyUp={this.onKeyUp} tabIndex="0">
+      <div className="game" onKeyUp={this.onKeyUp} tabIndex="0" ref="gamediv">
         <div className="game-info">
           <Hangman misses={this.state.misses} />
           <StatusColumn
@@ -365,7 +371,7 @@ function StatusColumn(props) {
         </button>
       </>
     );
-  }   
+  }
 
   return (
     <div className="revealed-word">
@@ -451,7 +457,7 @@ class Keyboard extends React.Component {
         />
         <KeyboardRow
           letters={["Z", "X", "C", "V", "B", "N", "M"]}
-          handleLetter={this.props.handleLetter} 
+          handleLetter={this.props.handleLetter}
           guessedLetters={this.props.guessedLetters}
         />
       </div>
