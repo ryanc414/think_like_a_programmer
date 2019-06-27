@@ -36,6 +36,83 @@ const hangman_images = [
   hangman13,
 ]
 
+class MetaGame extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {wordLength: null};
+    this.playGame = this.playGame.bind(this);
+    this.handleRetry = this.handleRetry.bind(this);
+  }
+
+  playGame(wordLength) {
+    this.setState({wordLength: wordLength});
+  }
+
+  handleRetry() {
+    this.setState({wordLength: null});
+  }
+  
+  render() {
+    if (!this.state.wordLength) {
+      return <StartSelector playGame={this.playGame} />;
+    } else {
+      return (
+        <Game
+           wordLength={this.state.wordLength}
+           placeHolder="_"
+           maxMisses={13}
+           handleRetry={this.handleRetry}
+        />
+      );
+    }
+  }
+}
+
+// Simple form to select the word length to play with.
+class StartSelector extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {value: "8"};
+    this.handleChange = this.handleChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+  }
+
+  handleChange(e) {
+    e.preventDefault();
+    this.setState({value: e.target.value});
+  }
+
+  handleSubmit(e) {
+    e.preventDefault();
+    this.props.playGame(parseInt(this.state.value));
+  }
+
+  render() {
+    return (
+      <div className="start-selector">
+        <h1>Fiendish Hangman</h1>
+        <form onSubmit={this.handleSubmit}>
+          <label>
+            Select a word length:
+            <select value={this.state.value} onChange={this.handleChange}>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+              <option value="11">11</option>
+              <option value="12">12</option>
+            </select>
+          </label>
+          <input type="submit" value="Play" />
+        </form>
+      </div>
+    );
+  }
+}      
+
 // Top-level game component.
 class Game extends React.PureComponent {
   constructor(props) {
@@ -43,6 +120,7 @@ class Game extends React.PureComponent {
     this.state = this.initialState();
     this.handleLetter = this.handleLetter.bind(this);
     this.onKeyUp = this.onKeyUp.bind(this);
+    this.handleRetry = this.handleRetry.bind(this);
   }
 
   // Construct initial state, also used for reset.
@@ -66,6 +144,7 @@ class Game extends React.PureComponent {
       guessedLetters: guessedLetters,
       revealedWord: revealedWord,
       words: words,
+      finishMessage: null,
     };
   }
 
@@ -124,22 +203,22 @@ class Game extends React.PureComponent {
       words = patternWords.mostFrequentMatchingWords;
     }
 
+    let finishMessage = null;
     if (misses === this.props.maxMisses) {
-      alert("Too many misses. I was thinking of: " + this.randomWord());
-      this.setState(this.initialState());
+      finishMessage = (
+        "Too many misses. I was thinking of: " + this.randomWord());
     } else if (discoveredLetterCount === this.props.wordLength) {
-      alert("You won! I was thinking of: "
-            + revealedWord.join(""));
-      this.setState(this.initialState());
-    } else {
-      this.setState({
+      finishMessage = "You won! I was thinking of: " + revealedWord.join("");
+    }
+
+    this.setState({
         misses: misses,
         discoveredLetterCount: discoveredLetterCount,
         guessedLetters: guessedLetters,
         revealedWord: revealedWord,
         words: words,
-      });
-    }
+        finishMessage: finishMessage,
+    });
   }
 
   // Split our current words list into two, one with and one without a certain
@@ -233,13 +312,22 @@ class Game extends React.PureComponent {
     this.handleLetter(upperKey);
   }
 
+  handleRetry() {
+    this.setState(this.initialState());
+    this.props.handleRetry();
+  }
+
   // Main render function.
   render() {
     return (
       <div className="game" onKeyUp={this.onKeyUp} tabIndex="0">
         <div className="game-info">
           <Hangman misses={this.state.misses} />
-          <RevealedWord revealedWord={this.state.revealedWord} />
+          <StatusColumn
+            revealedWord={this.state.revealedWord}
+            finishMessage={this.state.finishMessage}
+            onRetry={this.handleRetry}
+          />
         </div>
         <Keyboard handleLetter={this.handleLetter} guessedLetters={this.state.guessedLetters} />
         <p>Click keys or use your keyboard to guess a letter.</p>
@@ -263,13 +351,27 @@ function Hangman(props) {
   );
 }
 
-// Display the revealed word
-function RevealedWord(props) {
+// Display the revealed word and any extra status information.
+function StatusColumn(props) {
   const revealedWord = props.revealedWord.join(" ");
+
+  let finishInfo = null;
+  if (props.finishMessage) {
+    finishInfo = (
+      <>
+        <p>{props.finishMessage}</p>
+        <button className="retry-button" onClick={props.onRetry}>
+          Retry?
+        </button>
+      </>
+    );
+  }   
+
   return (
     <div className="revealed-word">
       <p>Word:</p>
       <p>{revealedWord}</p>
+      {finishInfo}
     </div>
   );
 }
@@ -405,7 +507,7 @@ class Key extends React.Component {
 // ========================================
 
 ReactDOM.render(
-  <Game wordLength={8} placeHolder="_" maxMisses={13} />,
+  <MetaGame />,
   document.getElementById("root")
 );
 
