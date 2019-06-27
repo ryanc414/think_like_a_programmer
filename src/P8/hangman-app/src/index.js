@@ -42,6 +42,7 @@ class Game extends React.PureComponent {
     super(props)
     this.state = this.initialState();
     this.handleLetter = this.handleLetter.bind(this);
+    this.onKeyUp = this.onKeyUp.bind(this);
   }
 
   // Construct initial state, also used for reset.
@@ -81,6 +82,10 @@ class Game extends React.PureComponent {
     if ((letter.length !== 1) || (letter < 'A') || (letter > 'Z')) {
       throw new Error("Not a letter: " + letter);
 		}
+
+    if (this.state.guessedLetters.get(letter)) {
+      throw new Error("Already guessed letter: " + letter);
+    }
 
     let guessedLetters = new Map(this.state.guessedLetters);
     guessedLetters.set(letter, true);
@@ -207,10 +212,31 @@ class Game extends React.PureComponent {
     ];
   }
 
+  // Handle a key press. If any letter key is pressed we take it as the next input.
+  onKeyUp(e) {
+    console.log('Key pressed: ' + e.key);
+    if (e.key.length !== 1) {
+      return;
+    }
+
+    const upperKey = e.key.toUpperCase();
+    if ((upperKey < 'A') || (upperKey > 'Z')) {
+      return;
+    }
+
+    if (this.state.guessedLetters.get(upperKey)) {
+      return;
+    }
+
+    console.log('Handle key event for letter: ' + upperKey);
+    e.preventDefault();
+    this.handleLetter(upperKey);
+  }
+
   // Main render function.
   render() {
     return (
-      <div className="game">
+      <div className="game" onKeyUp={this.onKeyUp} tabIndex="0">
         <div className="game-info">
           <Hangman misses={this.state.misses} />
           <RevealedWord revealedWord={this.state.revealedWord} />
